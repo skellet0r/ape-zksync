@@ -5,7 +5,7 @@ from typing import IO, Iterator, List, Optional, Union
 
 from ape.api import BlockAPI, ReceiptAPI
 from ape.contracts.base import ContractEvent
-from ape.exceptions import TransactionError
+from ape.exceptions import OutOfGasError, TransactionError
 from ape.types import ContractLog
 from ape.utils import ZERO_ADDRESS
 from ape_ethereum.ecosystem import Ethereum
@@ -52,6 +52,17 @@ class ZKSyncReceipt(ReceiptAPI):
         return self.status == TransactionStatusEnum.FAILING
 
     @property
+    def ran_out_of_gas(self) -> bool:
+        return self.failed and self.gas_used == (self.gas_limit or self.ergs_limit)
+
+    def raise_for_status(self):
+        if self.ran_out_of_gas:
+            raise OutOfGasError()
+        elif self.failed:
+            txn_hash = HexBytes(self.txn_hash).hex()
+            raise TransactionError(message=f"Transaction '{txn_hash}' failed.")
+
+    @property
     def total_fees_paid(self) -> int:
         # first transfer event is always fees paid
         event = next(
@@ -61,7 +72,7 @@ class ZKSyncReceipt(ReceiptAPI):
                     name="Transfer",
                     inputs=[
                         EventABIType(name="from", type="address", indexed=True),
-                        EventABIType(name="from", type="address", indexed=True),
+                        EventABIType(name="to", type="address", indexed=True),
                         EventABIType(name="value", type="uint256"),
                     ],
                 )
@@ -113,6 +124,13 @@ class ZKSync(Ethereum):
         txn_hash = HexBytes(data.get("hash", b"")).hex()
         # NOTE: to get calldata we need to actually decode the serialized tx
         serialized_input = HexBytes(data.get("input", ""))
+        tx_type = (
+            TransactionType.LEGACY
+            if serialized_input[0] != int(TransactionType.EIP712.value, 16)
+            else TransactionType.EIP712
+        )
+        if hex(serialized_input[0]) == TransactionType.EIP712.value:
+            tx_type = TransactionType.EIP712
 
         receipt = ZKSyncReceipt(
             block_number=data.get("block_number") or data.get("blockNumber"),
@@ -126,6 +144,7 @@ class ZKSync(Ethereum):
             status=status,
             txn_hash=txn_hash,
             value=data.get("value", 0),
+            tx_type=tx_type,
         )
         # TODO: decode serialized input for more info
         return receipt
