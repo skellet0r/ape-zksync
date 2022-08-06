@@ -1,4 +1,5 @@
-from typing import Iterator, List, Optional, Union
+import sys
+from typing import IO, Iterator, List, Optional, Union
 
 from ape.api import BlockAPI, ReceiptAPI
 from ape.base import ContractEvent
@@ -57,6 +58,9 @@ class ZKSyncReceipt(ReceiptAPI):
         ] = None,
     ) -> Iterator[ContractLog]:
         return Receipt.decode_logs(self, abi)
+
+    def show_trace(self, verbose: bool = False, file: IO[str] = sys.stdout):
+        Receipt.show_trace(self, verbose, file)
 
 
 class ZKSync(Ethereum):
