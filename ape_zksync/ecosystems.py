@@ -15,3 +15,6 @@ class ZKSync(Ethereum):
     @property
     def config(self) -> ZKSyncConfig:
         return self.config_manager.get_config("zksync")
+
+    def decode_block(self, data: dict) -> ZKSyncBlock:
+        return ZKSyncBlock.parse_obj(data)
