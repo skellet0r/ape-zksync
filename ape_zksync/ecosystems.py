@@ -5,7 +5,7 @@ from ape.api import BlockAPI, ReceiptAPI
 from ape.base import ContractEvent
 from ape.types import ContractLog
 from ape_ethereum.ecosystem import Ethereum
-from ape_ethereum.transactions import Receipt
+from ape_ethereum.transactions import Receipt, TransactionStatusEnum
 from ethpm_types.abi import EventABI, EventABIType
 from pydantic import Field
 
@@ -17,9 +17,9 @@ class ZKSyncBlock(BlockAPI):
 
 
 class ZKSyncReceipt(ReceiptAPI):
-    gas_limit: int = Field(0, exclude=True)
-    gas_price: int = Field(0, exclude=True)
-    gas_used: int = Field(0, exclude=True)
+    gas_limit: int = 0
+    gas_price: int = 0
+    gas_used: int = 0
 
     # serialized tx submitted to the network
     tx_type: int
@@ -32,6 +32,10 @@ class ZKSyncReceipt(ReceiptAPI):
 
     # zksync allows paying in tokens as well as ETH
     fee_token: str
+
+    @property
+    def failed(self) -> bool:
+        return self.status == TransactionStatusEnum.FAILING
 
     @property
     def total_fees_paid(self) -> int:
