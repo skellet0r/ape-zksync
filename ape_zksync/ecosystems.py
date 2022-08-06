@@ -3,6 +3,7 @@ import time
 from enum import Enum
 from typing import IO, Iterator, List, Optional, Union
 
+import rlp
 from ape.api import BlockAPI, ReceiptAPI
 from ape.contracts.base import ContractEvent
 from ape.exceptions import OutOfGasError, TransactionError
@@ -31,6 +32,7 @@ class ZKSyncBlock(BlockAPI):
 
 
 class ZKSyncReceipt(ReceiptAPI):
+    # TODO: also include Account Abstraction data
     gas_limit: int = 0
     gas_price: int = 0
     gas_used: int = 0
@@ -124,17 +126,48 @@ class ZKSync(Ethereum):
         txn_hash = HexBytes(data.get("hash", b"")).hex()
         # NOTE: to get calldata we need to actually decode the serialized tx
         serialized_input = HexBytes(data.get("input", ""))
-        tx_type = (
-            TransactionType.LEGACY
-            if serialized_input[0] != int(TransactionType.EIP712.value, 16)
-            else TransactionType.EIP712
-        )
+        decoded_input = []
+
+        tx_type = TransactionType.LEGACY
         if hex(serialized_input[0]) == TransactionType.EIP712.value:
             tx_type = TransactionType.EIP712
+            decoded_input = [
+                HexBytes(i).hex() if isinstance(i, (bytes, int)) else i
+                for i in rlp.decode(serialized_input[1:])
+            ]
+        else:
+            decoded_input = [HexBytes(i).hex() for i in rlp.decode(serialized_input)]
+
+        calldata = HexBytes(decoded_input[5])
+        gas_limit = 0 if decoded_input[2] == "0x" else int(decoded_input[2], 16)
+        gas_price = 0 if decoded_input[1] == "0x" else int(decoded_input[1], 16)
+        fee_token = ZERO_ADDRESS
+        ergs_limit = 0
+        ergs_per_pubdata_byte_limit = 0
+        ergs_price = 0
+
+        if tx_type == TransactionType.EIP712:
+            fee_token = decoded_input[10]
+            ergs_per_pubdata_byte_limit = (
+                0 if decoded_input[11] == "0x" else int(decoded_input[11], 16)
+            )
+            if ergs_per_pubdata_byte_limit != 0:
+                ergs_limit = gas_limit
+                ergs_price = gas_price
+
+                gas_limit = 0
+                gas_price = 0
 
         receipt = ZKSyncReceipt(
             block_number=data.get("block_number") or data.get("blockNumber"),
             contract_address=data.get("contractAddress"),
+            data=calldata,
+            ergs_limit=ergs_limit,
+            ergs_per_pubdata_byte_limit=ergs_per_pubdata_byte_limit,
+            ergs_price=ergs_price,
+            fee_token=fee_token,
+            gas_limit=gas_limit,
+            gas_price=gas_price,
             input=serialized_input,
             logs=data.get("logs", []),
             nonce=data["nonce"] if "nonce" in data and data["nonce"] != "" else None,
@@ -142,9 +175,9 @@ class ZKSync(Ethereum):
             required_confirmations=data.get("required_confirmations", 0),
             sender=data.get("sender") or data.get("from"),
             status=status,
+            tx_type=tx_type,
             txn_hash=txn_hash,
             value=data.get("value", 0),
-            tx_type=tx_type,
         )
-        # TODO: decode serialized input for more info
+        receipt.gas_used = receipt.total_fees_paid // (gas_price or ergs_price)
         return receipt
