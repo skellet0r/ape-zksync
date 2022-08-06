@@ -4,7 +4,7 @@ from enum import Enum
 from typing import IO, Iterator, List, Optional, Union
 
 from ape.api import BlockAPI, ReceiptAPI
-from ape.base import ContractEvent
+from ape.contracts.base import ContractEvent
 from ape.exceptions import TransactionError
 from ape.types import ContractLog
 from ape.utils import ZERO_ADDRESS
