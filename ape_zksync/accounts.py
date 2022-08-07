@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Iterator, Optional
 
 import click
@@ -6,28 +7,42 @@ from ape.exceptions import AccountsError
 from ape.types import TransactionSignature
 from ape_accounts import AccountContainer, KeyfileAccount
 from ape_ethereum.transactions import StaticFeeTransaction
-from eip712.messages import EIP712Message
 from eth_account import Account as EthAccount
+from eth_account._utils.structured_data.hashing import hash_domain
+from eth_account._utils.structured_data.hashing import (
+    hash_message as hash_eip712_message,
+)
+from eth_account.messages import SignableMessage
 from eth_utils import to_bytes
 from hexbytes import HexBytes
 
 from ape_zksync.ecosystems import ZKSyncTransaction
 
-
-class Transaction(EIP712Message):
-    _name_: "string" = "zkSync"  # type: ignore  # noqa: F821
-    _version_: "string" = "2"  # type: ignore  # noqa: F821
-    _chainId_: "uint256"  # type: ignore  # noqa: F821
-
-    txType: "uint8"  # type: ignore  # noqa: F821
-    to: "uint256"  # type: ignore  # noqa: F821
-    value: "uint256"  # type: ignore  # noqa: F821
-    data: "bytes"  # type: ignore  # noqa: F821
-    feeToken: "uint256"  # type: ignore  # noqa: F821
-    ergsLimit: "uint256"  # type: ignore  # noqa: F821
-    ergsPerPubdataByteLimit: "uint256"  # type: ignore  # noqa: F821
-    ergsPrice: "uint256"  # type: ignore  # noqa: F821
-    nonce: "uint256"  # type: ignore  # noqa: F821
+STRUCT = {
+    "types": {
+        "EIP712Domain": [
+            {"name": "name", "type": "string"},
+            {"name": "version", "type": "string"},
+            {"name": "chainId", "type": "uint256"},
+        ],
+        "Transaction": [
+            {"name": "txType", "type": "uint8"},
+            {"name": "to", "type": "uint256"},
+            {"name": "value", "type": "uint256"},
+            {"name": "data", "type": "bytes"},
+            {"name": "feeToken", "type": "uint256"},
+            {"name": "ergsLimit", "type": "uint256"},
+            {"name": "ergsPerPubdataByteLimit", "type": "uint256"},
+            {"name": "ergsPrice", "type": "uint256"},
+            {"name": "nonce", "type": "uint256"},
+        ],
+    },
+    "primaryType": "Transaction",
+    "domain": {
+        "name": "zkSync",
+        "version": "2",
+    },
+}
 
 
 class ZKAccountContainer(AccountContainer):
@@ -47,8 +62,9 @@ class ZKSyncAccount(KeyfileAccount):
             return None
 
         if isinstance(txn, ZKSyncTransaction):
-            tx_struct = Transaction(
-                _chainId_=txn.chain_id,
+            tx_struct = deepcopy(STRUCT)
+            tx_struct["domain"]["chainId"] = txn.chain_id  # type: ignore
+            tx_struct["message"] = dict(
                 txType=txn.type,
                 to=int(txn.receiver, 16),
                 value=txn.value,
@@ -59,7 +75,13 @@ class ZKSyncAccount(KeyfileAccount):
                 ergsPrice=txn.gas_price,
                 nonce=txn.nonce,
             )
-            return self.sign_message(tx_struct)
+            signable_message = SignableMessage(
+                HexBytes(b"\x01"),
+                hash_domain(tx_struct),
+                hash_eip712_message(tx_struct),
+            )
+
+            return self.sign_message(signable_message)
         elif isinstance(txn, StaticFeeTransaction):
             signed_txn = EthAccount.sign_transaction(
                 txn.dict(exclude_none=True, by_alias=True), self.__key

@@ -40,7 +40,8 @@ class ZKSyncTransaction(BaseTransaction):
 
         data = list(
             map(
-                HexBytes,
+                lambda v: HexBytes("0x") if v == 0 else HexBytes(v),
+                # HexBytes,
                 [
                     self.nonce,
                     self.gas_price,
