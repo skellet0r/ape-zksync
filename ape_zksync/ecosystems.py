@@ -1,13 +1,13 @@
 import sys
 import time
 from enum import Enum
-from typing import IO, Iterator, List, Optional, Union
+from typing import IO, Iterator, List, Optional, Tuple, Union
 
 import rlp
 from ape.api import BlockAPI, ReceiptAPI, TransactionAPI
 from ape.contracts.base import ContractEvent
 from ape.exceptions import OutOfGasError, TransactionError
-from ape.types import ContractLog
+from ape.types import ContractLog, TransactionSignature
 from ape.utils import ZERO_ADDRESS
 from ape_ethereum.ecosystem import Ethereum
 from ape_ethereum.transactions import Receipt, TransactionStatusEnum
@@ -29,6 +29,15 @@ class Transaction(EIP712Type):
     ergsPerPubdataByteLimit: "uint256"  # type: ignore  # noqa: F821
     ergsPrice: "uint256"  # type: ignore  # noqa: F821
     nonce: "uint256"  # type: ignore  # noqa: F821
+
+
+class ZKSyncTransaction(TransactionAPI):
+    type: int = 0x71
+    gas_price: int
+    fee_token: str = ZERO_ADDRESS
+    ergs_per_pub_data: int = 0
+    factory_deps: Optional[List[bytes]] = None
+    aa_params: Optional[Tuple[str, TransactionSignature]] = None
 
 
 class TransactionReceiptError(TransactionError):
