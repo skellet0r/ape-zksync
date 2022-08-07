@@ -1,6 +1,7 @@
 import sys
 import time
 from enum import Enum
+from hashlib import sha256
 from typing import IO, Iterator, List, Optional, Tuple, Union
 
 import rlp
@@ -8,15 +9,17 @@ from ape.api import BlockAPI, ReceiptAPI, TransactionAPI
 from ape.contracts.base import ContractEvent
 from ape.exceptions import OutOfGasError, SignatureError, TransactionError
 from ape.types import ContractLog, TransactionSignature
-from ape.utils import ZERO_ADDRESS
+from ape.utils import EMPTY_BYTES32, ZERO_ADDRESS
 from ape_ethereum.ecosystem import Ethereum
 from ape_ethereum.transactions import BaseTransaction, Receipt, TransactionStatusEnum
 from eip712.messages import EIP712Type
-from ethpm_types.abi import EventABI, EventABIType
+from ethpm_types.abi import ABIType, ConstructorABI, EventABI, EventABIType, MethodABI
 from hexbytes import HexBytes
 from pydantic import Field
 
 from ape_zksync.config import ZKSyncConfig
+
+CONTRACT_DEPLOYER_ADDRESS = "0x0000000000000000000000000000000000008006"
 
 
 class Transaction(EIP712Type):
@@ -240,6 +243,42 @@ class ZKSync(Ethereum):
         )
         receipt.gas_used = receipt.total_fees_paid // (gas_price or ergs_price)
         return receipt
+
+    def encode_deployment(
+        self, deployment_bytecode: HexBytes, abi: ConstructorABI, *args, **kwargs
+    ) -> ZKSyncTransaction:
+        assert len(deployment_bytecode) < 2**16
+        # contract deployments require a tx to the Contract Deployer contract
+        create_abi = MethodABI(
+            type="function",
+            name="create",
+            inputs=[
+                ABIType(type="bytes32"),
+                ABIType(type="bytes32"),
+                ABIType(type="uint256"),
+                ABIType(type="bytes"),
+            ],
+            outputs=[ABIType(type="address")],
+        )
+        # bytecodehash passed as an argument is the sha256 hash of the
+        # init code, where the upper 2 bytes are the word length of the init code
+        bytecode_hash = sha256(deployment_bytecode).hexdigest()  # doesn't have leading 0x
+        bytecode_hash = "0x" + hex(len(deployment_bytecode) // 32)[2:].zfill(4) + bytecode_hash[4:]
+        create_args = [
+            EMPTY_BYTES32,
+            bytecode_hash,
+            kwargs["value"],
+            self.encode_calldata(abi, *args),
+        ]
+
+        # modify kwargs
+        kwargs["type"] = 0x71
+        kwargs["factory_deps"] = [deployment_bytecode] + kwargs.get("factory_deps", [])
+        kwargs.setdefault("gas_price", self.provider.gas_price)
+
+        return super().encode_transaction(
+            CONTRACT_DEPLOYER_ADDRESS, create_abi, *create_args, **kwargs
+        )
 
     def create_transaction(self, **kwargs) -> TransactionAPI:
         if kwargs.setdefault("type", 0) == 0:
