@@ -4,7 +4,7 @@ from enum import Enum
 from typing import IO, Iterator, List, Optional, Union
 
 import rlp
-from ape.api import BlockAPI, ReceiptAPI
+from ape.api import BlockAPI, ReceiptAPI, TransactionAPI
 from ape.contracts.base import ContractEvent
 from ape.exceptions import OutOfGasError, TransactionError
 from ape.types import ContractLog
@@ -194,3 +194,10 @@ class ZKSync(Ethereum):
         )
         receipt.gas_used = receipt.total_fees_paid // (gas_price or ergs_price)
         return receipt
+
+    def create_transaction(self, **kwargs) -> TransactionAPI:
+        if kwargs.setdefault("type", 0) == 0:
+            super().create_transaction(**kwargs)
+        else:
+            # use eip712 transaction type
+            pass
