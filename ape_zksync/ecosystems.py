@@ -243,7 +243,17 @@ class ZKSync(Ethereum):
 
     def create_transaction(self, **kwargs) -> TransactionAPI:
         if kwargs.setdefault("type", 0) == 0:
-            super().create_transaction(**kwargs)
+            return super().create_transaction(**kwargs)
         else:
+            kwargs["type"] = 0x71
+            if kwargs.get("required_confirmations") is None:
+                # Attempt to use default required-confirmations from `ape-config.yaml`.
+                required_confirmations = 0
+                active_provider = self.network_manager.active_provider
+                if active_provider:
+                    required_confirmations = active_provider.network.required_confirmations
+
+                kwargs["required_confirmations"] = required_confirmations
+
             # use eip712 transaction type
-            pass
+            return ZKSyncTransaction(**kwargs)
