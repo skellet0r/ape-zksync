@@ -10,7 +10,7 @@ from ape.exceptions import OutOfGasError, SignatureError, TransactionError
 from ape.types import ContractLog, TransactionSignature
 from ape.utils import ZERO_ADDRESS
 from ape_ethereum.ecosystem import Ethereum
-from ape_ethereum.transactions import Receipt, TransactionStatusEnum
+from ape_ethereum.transactions import BaseTransaction, Receipt, TransactionStatusEnum
 from eip712.messages import EIP712Type
 from ethpm_types.abi import EventABI, EventABIType
 from hexbytes import HexBytes
@@ -31,13 +31,16 @@ class Transaction(EIP712Type):
     nonce: "uint256"  # type: ignore  # noqa: F821
 
 
-class ZKSyncTransaction(TransactionAPI):
+class ZKSyncTransaction(BaseTransaction):
     type: int = 0x71
     gas_price: int
     fee_token: str = ZERO_ADDRESS
     ergs_per_pub_data: int = 0
     factory_deps: Optional[List[bytes]] = None
     aa_params: Optional[Tuple[str, TransactionSignature]] = None
+
+    max_fee: Optional[int] = Field(None, exclude=True, repr=False)
+    max_priority_fee: Optional[int] = Field(None, exclude=True, repr=False)
 
     def serialize_transaction(self) -> bytes:
         # NOTE: AA transactions aren't supported currently
@@ -68,6 +71,10 @@ class ZKSyncTransaction(TransactionAPI):
             list(map(HexBytes, self.aa_params or [])),
         ]
         return HexBytes(0x71) + rlp.encode(data)
+
+    @property
+    def total_transfer_value(self) -> int:
+        return self.gas_limit * self.gas_price + self.value
 
 
 class TransactionReceiptError(TransactionError):
