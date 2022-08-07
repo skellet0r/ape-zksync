@@ -1,6 +1,7 @@
 from ape import plugins
 from ape.api import create_network_type
 
+from ape_zksync.accounts import ZKAccountContainer, ZKSyncAccount
 from ape_zksync.config import ZKSyncConfig
 from ape_zksync.ecosystems import ZKSync
 from ape_zksync.providers import ZKSyncProvider
@@ -24,3 +25,8 @@ def networks():
 @plugins.register(plugins.ProviderPlugin)
 def providers():
     yield "zksync", "testnet", ZKSyncProvider
+
+
+@plugins.register(plugins.AccountPlugin)
+def account_types():
+    return ZKAccountContainer, ZKSyncAccount
