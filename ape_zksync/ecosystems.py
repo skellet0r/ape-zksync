@@ -11,11 +11,24 @@ from ape.types import ContractLog
 from ape.utils import ZERO_ADDRESS
 from ape_ethereum.ecosystem import Ethereum
 from ape_ethereum.transactions import Receipt, TransactionStatusEnum
+from eip712.messages import EIP712Type
 from ethpm_types.abi import EventABI, EventABIType
 from hexbytes import HexBytes
 from pydantic import Field
 
 from ape_zksync.config import ZKSyncConfig
+
+
+class Transaction(EIP712Type):
+    txType: "uint8"  # type: ignore  # noqa: F821
+    to: "uint256"  # type: ignore  # noqa: F821
+    value: "uint256"  # type: ignore  # noqa: F821
+    data: "bytes"  # type: ignore  # noqa: F821
+    feeToken: "uint256"  # type: ignore  # noqa: F821
+    ergsLimit: "uint256"  # type: ignore  # noqa: F821
+    ergsPerPubdataByteLimit: "uint256"  # type: ignore  # noqa: F821
+    ergsPrice: "uint256"  # type: ignore  # noqa: F821
+    nonce: "uint256"  # type: ignore  # noqa: F821
 
 
 class TransactionReceiptError(TransactionError):
