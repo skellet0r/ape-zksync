@@ -12,7 +12,6 @@ from ape.types import ContractLog, TransactionSignature
 from ape.utils import EMPTY_BYTES32, ZERO_ADDRESS
 from ape_ethereum.ecosystem import Ethereum
 from ape_ethereum.transactions import BaseTransaction, Receipt, TransactionStatusEnum
-from eip712.messages import EIP712Type
 from ethpm_types.abi import ABIType, ConstructorABI, EventABI, EventABIType, MethodABI
 from hexbytes import HexBytes
 from pydantic import Field
@@ -20,18 +19,6 @@ from pydantic import Field
 from ape_zksync.config import ZKSyncConfig
 
 CONTRACT_DEPLOYER_ADDRESS = "0x0000000000000000000000000000000000008006"
-
-
-class Transaction(EIP712Type):
-    txType: "uint8"  # type: ignore  # noqa: F821
-    to: "uint256"  # type: ignore  # noqa: F821
-    value: "uint256"  # type: ignore  # noqa: F821
-    data: "bytes"  # type: ignore  # noqa: F821
-    feeToken: "uint256"  # type: ignore  # noqa: F821
-    ergsLimit: "uint256"  # type: ignore  # noqa: F821
-    ergsPerPubdataByteLimit: "uint256"  # type: ignore  # noqa: F821
-    ergsPrice: "uint256"  # type: ignore  # noqa: F821
-    nonce: "uint256"  # type: ignore  # noqa: F821
 
 
 class ZKSyncTransaction(BaseTransaction):
@@ -265,16 +252,17 @@ class ZKSync(Ethereum):
         bytecode_hash = sha256(deployment_bytecode).hexdigest()  # doesn't have leading 0x
         bytecode_hash = "0x" + hex(len(deployment_bytecode) // 32)[2:].zfill(4) + bytecode_hash[4:]
         create_args = [
-            EMPTY_BYTES32,
-            bytecode_hash,
+            HexBytes(EMPTY_BYTES32),
+            HexBytes(bytecode_hash),
             kwargs["value"],
-            self.encode_calldata(abi, *args),
+            self.encode_calldata(abi, *args) if abi.inputs else b"",
         ]
 
         # modify kwargs
         kwargs["type"] = 0x71
         kwargs["factory_deps"] = [deployment_bytecode] + kwargs.get("factory_deps", [])
         kwargs.setdefault("gas_price", self.provider.gas_price)
+        kwargs["chain_id"] = self.provider.chain_id
 
         return super().encode_transaction(
             CONTRACT_DEPLOYER_ADDRESS, create_abi, *create_args, **kwargs
