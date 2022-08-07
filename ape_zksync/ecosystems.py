@@ -6,7 +6,7 @@ from typing import IO, Iterator, List, Optional, Tuple, Union
 import rlp
 from ape.api import BlockAPI, ReceiptAPI, TransactionAPI
 from ape.contracts.base import ContractEvent
-from ape.exceptions import OutOfGasError, TransactionError
+from ape.exceptions import OutOfGasError, SignatureError, TransactionError
 from ape.types import ContractLog, TransactionSignature
 from ape.utils import ZERO_ADDRESS
 from ape_ethereum.ecosystem import Ethereum
@@ -38,6 +38,36 @@ class ZKSyncTransaction(TransactionAPI):
     ergs_per_pub_data: int = 0
     factory_deps: Optional[List[bytes]] = None
     aa_params: Optional[Tuple[str, TransactionSignature]] = None
+
+    def serialize_transaction(self) -> bytes:
+        # NOTE: AA transactions aren't supported currently
+        # if self.signature is None, aa_params[1] should be a sig == AA tx
+        if not self.signature:
+            raise SignatureError("The transaction is not signed.")
+
+        data = list(
+            map(
+                HexBytes,
+                [
+                    self.nonce,
+                    self.gas_price,
+                    self.gas_limit,
+                    self.receiver,
+                    self.value,
+                    self.data,
+                    self.signature.v - 27 + (self.chain_id * 2 + 35),  # eip-155
+                    self.signature.r,
+                    self.signature.s,
+                    self.chain_id,
+                    self.fee_token,
+                    self.ergs_per_pub_data,
+                ],
+            )
+        ) + [
+            list(map(HexBytes, self.factory_deps or [])),
+            list(map(HexBytes, self.aa_params or [])),
+        ]
+        return HexBytes(0x71) + rlp.encode(data)
 
 
 class TransactionReceiptError(TransactionError):
