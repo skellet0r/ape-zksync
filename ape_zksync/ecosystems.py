@@ -49,9 +49,9 @@ class ZKSyncTransaction(BaseTransaction):
                     self.receiver,
                     self.value,
                     self.data,
-                    self.signature.v - 27 + (self.chain_id * 2 + 35),  # eip-155
+                    0,
                     self.signature.r,
-                    self.signature.s,
+                    int(self.signature.s.hex(), 16) | ((self.signature.v - 27) << 255),
                     self.chain_id,
                     self.fee_token,
                     self.ergs_per_pub_data,
