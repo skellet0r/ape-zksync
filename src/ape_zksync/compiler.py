@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Set
 
 import zkvvm
 from ape.api import CompilerAPI
+from ethpm_types import ContractType
 from semantic_version import SimpleSpec, Version
 
 
@@ -32,6 +33,29 @@ class ZKVyperCompiler(CompilerAPI):
             ver: {}
             for ver in self.get_version_map(contract_filepaths, base_path).keys()
         }
+
+    def compile(
+        self, contract_filepaths: List[Path], base_path: Optional[Path]
+    ) -> List[ContractType]:
+        config = zkvvm.Config()
+        version_manager = zkvvm.VersionManager(config)
+
+        base_path = base_path or self.config_manager.contracts_folder
+        version_map = self.get_version_map(
+            [p for p in contract_filepaths if p.parent.name != "interfaces"]
+        )
+
+        contracts = []
+        for zk_version, source_paths in version_map.items():
+            config["zk_version"] = zk_version
+            output = version_manager.compile(source_paths)
+            for fp, o in output.items():
+                o["contractName"] = Path(fp).stem
+                o["sourceId"] = fp
+                o["deploymentBytecode"] = {"bytecode": o["bytecode"]}
+                o["runtimeBytecode"] = {"bytecode": o["bytecode_runtime"]}
+                contracts.append(ContractType.parse_obj(o))
+        return contracts
 
     def get_version_map(
         self, contract_filepaths: List[Path], base_path: Optional[Path] = None
