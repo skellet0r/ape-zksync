@@ -9,6 +9,8 @@ from ape.api import CompilerAPI
 from ethpm_types import ContractType
 from semantic_version import SimpleSpec, Version
 
+PATTERN = re.compile(r"\s* \# \s+ @zk-version \s+ (.+)", re.VERBOSE)
+
 
 class ZKVyperCompiler(CompilerAPI):
     @property
@@ -16,12 +18,11 @@ class ZKVyperCompiler(CompilerAPI):
         return "zkVyper"
 
     def get_versions(self, all_paths: List[Path]) -> Set[str]:
-        pattern = re.compile(r"\s* # \s+ @zk-version \s+ (.+)", re.VERBOSE)
         versions = []
         with contextlib.ExitStack() as stack:
             files = [stack.enter_context(fp.open()) for fp in all_paths]
             for file in files:
-                mo = pattern.match(file.readline())
+                mo = PATTERN.match(file.readline())
                 with contextlib.suppress(ValueError):
                     versions.append(str(SimpleSpec(mo.group(1) if mo else "latest")))
         return set(versions)
@@ -70,11 +71,10 @@ class ZKVyperCompiler(CompilerAPI):
                 raise ValueError(f"No zkVyper version meeting constraint: {spec!s}")
             version_manager.install(selected, show_progress=True)
 
-        pattern = re.compile(r"\s* # \s+ @zk-version \s+ (.+)", re.VERBOSE)
         version_map = defaultdict(set)
         with contextlib.ExitStack() as stack:
             for fp in contract_filepaths:
-                mo = pattern.match(stack.enter_context(fp.open()).readline())
+                mo = PATTERN.match(stack.enter_context(fp.open()).readline())
                 try:
                     spec = SimpleSpec(mo.group(1) if mo else ">=0.1.0")
                 except ValueError:
