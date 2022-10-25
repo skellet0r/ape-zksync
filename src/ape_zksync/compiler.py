@@ -51,10 +51,14 @@ class ZKVyperCompiler(CompilerAPI):
             config["zk_version"] = SimpleSpec(str(zk_version))
             output = version_manager.compile(source_paths)
             for fp, o in output.items():
+                if not isinstance(o, dict):
+                    continue
                 o["contractName"] = Path(fp).stem
                 o["sourceId"] = fp
                 o["deploymentBytecode"] = {"bytecode": o["bytecode"]}
                 o["runtimeBytecode"] = {"bytecode": o["bytecode_runtime"]}
+                o["zk_version"] = str(zk_version)
+                o["vyper_version"] = str(config["vyper_version"])
                 contracts.append(ContractType.parse_obj(o))
         return contracts
 
