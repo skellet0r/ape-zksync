@@ -25,6 +25,14 @@ class ZKVyperCompiler(CompilerAPI):
                     versions.append(str(SimpleSpec(mo.group(1) if mo else "latest")))
         return set(versions)
 
+    def get_compiler_settings(
+        self, contract_filepaths: List[Path], base_path: Optional[Path] = None
+    ) -> Dict[Version, Dict]:
+        return {
+            ver: {}
+            for ver in self.get_version_map(contract_filepaths, base_path).keys()
+        }
+
     def get_version_map(
         self, contract_filepaths: List[Path], base_path: Optional[Path] = None
     ) -> Dict[Version, Set[Path]]:
