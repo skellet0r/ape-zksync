@@ -48,7 +48,7 @@ class ZKVyperCompiler(CompilerAPI):
 
         contracts = []
         for zk_version, source_paths in version_map.items():
-            config["zk_version"] = zk_version
+            config["zk_version"] = SimpleSpec(str(zk_version))
             output = version_manager.compile(source_paths)
             for fp, o in output.items():
                 o["contractName"] = Path(fp).stem
