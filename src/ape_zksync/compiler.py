@@ -5,15 +5,13 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 import zkvvm
-from ape.api import CompilerAPI, PluginConfig
+from ape.api import CompilerAPI
 from ethpm_types import ContractType
 from semantic_version import SimpleSpec, Version
 
+from ape_zksync.config import ZKSyncConfig
+
 PATTERN = re.compile(r"\s* \# \s+ @zk-version \s+ (.+)", re.VERBOSE)
-
-
-class ZKSyncConfig(PluginConfig):
-    vyper_version: str = "0.3.3"
 
 
 class ZKVyperCompiler(CompilerAPI):
