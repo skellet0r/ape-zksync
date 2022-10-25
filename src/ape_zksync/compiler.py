@@ -5,17 +5,25 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 import zkvvm
-from ape.api import CompilerAPI
+from ape.api import CompilerAPI, PluginConfig
 from ethpm_types import ContractType
 from semantic_version import SimpleSpec, Version
 
 PATTERN = re.compile(r"\s* \# \s+ @zk-version \s+ (.+)", re.VERBOSE)
 
 
+class ZKSyncConfig(PluginConfig):
+    vyper_version: str = "0.3.3"
+
+
 class ZKVyperCompiler(CompilerAPI):
     @property
     def name(self) -> str:
         return "zkVyper"
+
+    @property
+    def config(self) -> ZKSyncConfig:
+        return self.config_manager.get_config("zksync")
 
     def get_versions(self, all_paths: List[Path]) -> Set[str]:
         versions = []
@@ -38,7 +46,7 @@ class ZKVyperCompiler(CompilerAPI):
     def compile(
         self, contract_filepaths: List[Path], base_path: Optional[Path]
     ) -> List[ContractType]:
-        config = zkvvm.Config()
+        config = zkvvm.Config(vyper_version=self.config.vyper_version)
         version_manager = zkvvm.VersionManager(config)
 
         base_path = base_path or self.config_manager.contracts_folder
@@ -58,7 +66,7 @@ class ZKVyperCompiler(CompilerAPI):
                 o["deploymentBytecode"] = {"bytecode": o["bytecode"]}
                 o["runtimeBytecode"] = {"bytecode": o["bytecode_runtime"]}
                 o["zk_version"] = str(zk_version)
-                o["vyper_version"] = str(config["vyper_version"])
+                o["vyper_version"] = self.config.vyper_version
                 contracts.append(ContractType.parse_obj(o))
         return contracts
 

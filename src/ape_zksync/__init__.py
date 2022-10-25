@@ -1,11 +1,6 @@
 from ape import plugins
-from ape.api import PluginConfig
 
-from ape_zksync.compiler import ZKVyperCompiler
-
-
-class ZKSyncConfig(PluginConfig):
-    ...
+from ape_zksync.compiler import ZKSyncConfig, ZKVyperCompiler
 
 
 @plugins.register(plugins.Config)
