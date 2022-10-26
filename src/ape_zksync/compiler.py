@@ -17,7 +17,7 @@ PATTERN = re.compile(r"\s* \# \s+ @zk-version \s+ (.+)", re.VERBOSE)
 class ZKVyperCompiler(CompilerAPI):
     @property
     def name(self) -> str:
-        return "zkVyper"
+        return "zkvyper"
 
     @property
     def config(self) -> ZKSyncConfig:
