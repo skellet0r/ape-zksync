@@ -36,6 +36,7 @@ class ZKSyncTransaction(TransactionAPI):
         to_bytes = (
             lambda val: HexBytes(val).lstrip(b"\x00") if val else HexBytes(b"")
         )  # noqa: E731
+
         data = [
             to_bytes(self.nonce),
             to_bytes(self.max_priority_fee),
