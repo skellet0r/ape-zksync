@@ -6,11 +6,13 @@ from ape.api import TransactionAPI
 from ape.exceptions import SignatureError
 from ape.types import AddressType, GasLimit, MessageSignature
 from eth_typing import Hash32
+from eth_utils import keccak
 from hexbytes import HexBytes
 from pydantic import Field
 
 
-class TransactionType(enum.IntEnum):
+class TransactionType(enum.Enum):
+    LEGACY = 0x00
     ZKSYNC = 0x71
 
 
@@ -68,3 +70,7 @@ class ZKSyncTransaction(TransactionAPI):
             data += []
 
         return HexBytes(self.type) + rlp.encode(data)
+
+    @property
+    def txn_hash(self) -> HexBytes:
+        return HexBytes(keccak(self.serialize_transaction()))
