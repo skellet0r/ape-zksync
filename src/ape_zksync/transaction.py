@@ -5,6 +5,7 @@ import rlp
 from ape.api import TransactionAPI
 from ape.exceptions import SignatureError
 from ape.types import AddressType, GasLimit, MessageSignature
+from ape_ethereum.transactions import StaticFeeTransaction
 from eth_typing import Hash32
 from eth_utils import keccak
 from hexbytes import HexBytes
@@ -14,6 +15,12 @@ from pydantic import Field
 class TransactionType(enum.Enum):
     LEGACY = 0x00
     ZKSYNC = 0x71
+
+
+class LegacyTransaction(StaticFeeTransaction):
+    """Legacy Ethereum Transaction"""
+
+    type: int = Field(TransactionType.LEGACY.value, exclude=True, const=True)
 
 
 class ZKSyncTransaction(TransactionAPI):
