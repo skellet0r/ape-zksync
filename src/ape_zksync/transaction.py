@@ -103,7 +103,6 @@ class ZKSyncReceipt(ReceiptAPI):
     l1_batch_tx_index: int = Field(..., alias="l1BatchTxIndex")
     txn_hash: str = Field(..., alias="transactionHash")
     type: int = 0
-    transaction: Union[LegacyTransaction, ZKSyncTransaction] = Field(None, exclude=True)
 
     @validator("l1_batch_number", "l1_batch_tx_index", pre=True)
     def to_int(cls, value):
