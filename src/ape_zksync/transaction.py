@@ -21,6 +21,11 @@ class TransactionType(enum.Enum):
     ZKSYNC = 0x71
 
 
+class TransactionStatus(enum.IntEnum):
+    FAILED = 0
+    SUCCESS = 1
+
+
 class LegacyTransaction(StaticFeeTransaction):
     """Legacy Ethereum Transaction"""
 
@@ -102,10 +107,11 @@ class ZKSyncReceipt(ReceiptAPI):
 
     def total_fees_paid(self) -> int:
         # first log emitted is always ETH token tx fee
+        # NOTE: tx fee can be paid in tokens other than ETH
         return next(self.decode_logs()).value
 
     def ran_out_of_gas(self) -> bool:
-        return False
+        return Receipt.ran_out_of_gas(self)
 
     def decode_logs(
         self,
