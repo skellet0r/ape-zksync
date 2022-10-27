@@ -1,13 +1,15 @@
 import enum
-from typing import List, Optional, Union
+from typing import Iterator, List, Optional, Union
 
 import rlp
 from ape.api import ReceiptAPI, TransactionAPI
+from ape.contracts import ContractEvent
 from ape.exceptions import SignatureError
-from ape.types import AddressType, GasLimit, MessageSignature
+from ape.types import AddressType, ContractLog, GasLimit, MessageSignature
 from ape_ethereum.transactions import StaticFeeTransaction
 from eth_typing import Hash32
 from eth_utils import keccak
+from ethpm_types.abi import EventABI
 from hexbytes import HexBytes
 from pydantic import Field
 
@@ -94,6 +96,18 @@ class Receipt(ReceiptAPI):
     l1_batch_tx_index: int = Field(..., alias="l1BatchTxIndex")
     txn_hash: str = Field(..., alias="transactionHash")
     type: int = 0
-    transaction: Optional[Union[LegacyTransaction, ZKSyncTransaction]] = Field(
-        None, exclude=True
-    )
+    transaction: Union[LegacyTransaction, ZKSyncTransaction] = Field(None, exclude=True)
+
+    def total_fees_paid(self) -> int:
+        return 0
+
+    def ran_out_of_gas(self) -> bool:
+        return False
+
+    def decode_logs(
+        self,
+        abi: Optional[
+            Union[List[Union[EventABI, ContractEvent]], Union[EventABI, ContractEvent]]
+        ] = None,
+    ) -> Iterator[ContractLog]:
+        yield
