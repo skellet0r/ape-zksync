@@ -26,7 +26,7 @@ class ZKSyncBlock(BlockAPI):
     size: int = Field(0, exclude=True)
 
     @validator("l1_batch_number", pre=True)
-    def to_int(self, value):
+    def to_int(cls, value):
         return int(value, 16)
 
 
