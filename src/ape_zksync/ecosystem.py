@@ -101,7 +101,7 @@ class ZKSync(Ethereum):
         ]
 
         # modify kwargs
-        kwargs["type"] = 0x71
+        kwargs.setdefault("type", TransactionType.ZKSYNC.value)
         kwargs["factory_deps"] = [deployment_bytecode] + kwargs.get("factory_deps", [])
         kwargs.setdefault("gas_price", self.provider.gas_price)
         kwargs["chain_id"] = self.provider.chain_id
