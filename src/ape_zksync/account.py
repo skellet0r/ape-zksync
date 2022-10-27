@@ -72,15 +72,14 @@ class ZKSyncAccount(KeyfileAccount):
                 to=int(txn.receiver, 16),
                 value=txn.value,
                 data=txn.data,
-                feeToken=int(txn.fee_token, 16),
                 ergsLimit=txn.gas_limit,
-                ergsPerPubdataByteLimit=txn.ergs_per_pub_data,
+                ergsPerPubdataByteLimit=txn.gas_per_pubdata_byte_limit,
                 maxFeePerErg=txn.max_fee,
                 maxPriorityFeePerErg=txn.max_priority_fee,
                 nonce=txn.nonce,
-                paymaster=txn.paymaster,
-                factoryDeps=txn.factory_deps,
-                paymasterInput=txn.paymaster_input,
+                paymaster=int(txn.paymaster or "0x0", 16),
+                factoryDeps=txn.factory_deps or [],
+                paymasterInput=txn.paymaster_input or b"",
             )
             tx_struct["message"]["from"] = int(txn.sender, 16)  # type: ignore
             signable_message = SignableMessage(

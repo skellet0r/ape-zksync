@@ -43,7 +43,7 @@ class ZKSyncTransaction(TransactionAPI):
     gas_limit: Optional[GasLimit] = Field(None, alias="ergsLimit")
     type: int = Field(TransactionType.ZKSYNC.value, alias="txType", const=True)
     max_fee: Optional[int] = Field(None, alias="maxFeePerErg")
-    max_priority_fee: Optional[int] = Field(None, alias="maxPriorityFeePerErg")
+    max_priority_fee: int = Field(0, alias="maxPriorityFeePerErg")
 
     aa_signature: Optional[MessageSignature] = None
 
@@ -110,6 +110,7 @@ class ZKSyncReceipt(ReceiptAPI):
             return int(value, 16)
         return value
 
+    @property
     def total_fees_paid(self) -> int:
         # first log emitted is always ETH token tx fee
         # NOTE: tx fee can be paid in tokens other than ETH

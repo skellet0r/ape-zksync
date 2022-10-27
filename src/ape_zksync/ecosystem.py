@@ -62,11 +62,7 @@ class ZKSyncProvider(Web3Provider):
         ):
             txn.gas_price = self.gas_price
         elif txn_type == TransactionType.ZKSYNC:
-            if txn.max_priority_fee is None:
-                txn.max_priority_fee = self.priority_fee
-
-            if txn.max_fee is None:
-                txn.max_fee = self.base_fee
+            txn.max_fee = self.gas_price
 
         gas_limit = txn.gas_limit or self.network.gas_limit
         if isinstance(gas_limit, str) and gas_limit.isnumeric():
@@ -168,11 +164,11 @@ class ZKSync(Ethereum):
 
     def create_transaction(self, **kwargs) -> TransactionAPI:
         if (
-            kwargs.setdefault("type", TransactionType.LEGACY.value)
-            == TransactionType.LEGACY.value
+            kwargs.setdefault("type", TransactionType.ZKSYNC.value)
+            == TransactionType.ZKSYNC.value
         ):
-            return LegacyTransaction.parse_obj(kwargs)
-        elif kwargs["type"] == TransactionType.ZKSYNC.value:
             return ZKSyncTransaction.parse_obj(kwargs)
+        elif kwargs["type"] == TransactionType.LEGACY.value:
+            return LegacyTransaction.parse_obj(kwargs)
 
         raise Exception()
