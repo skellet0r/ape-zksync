@@ -99,14 +99,16 @@ class ZKSyncReceipt(ReceiptAPI):
     gas_price: int = Field(..., alias="effectiveGasPrice")
     sender: AddressType = Field(..., alias="from")
     gas_used: int = Field(..., alias="gasUsed")
-    l1_batch_number: int = Field(..., alias="l1BatchNumber")
-    l1_batch_tx_index: int = Field(..., alias="l1BatchTxIndex")
+    l1_batch_number: Optional[int] = Field(..., alias="l1BatchNumber")
+    l1_batch_tx_index: Optional[int] = Field(..., alias="l1BatchTxIndex")
     txn_hash: str = Field(..., alias="transactionHash")
     type: int = 0
 
     @validator("l1_batch_number", "l1_batch_tx_index", pre=True)
     def to_int(cls, value):
-        return int(value, 16)
+        if value:
+            return int(value, 16)
+        return value
 
     def total_fees_paid(self) -> int:
         # first log emitted is always ETH token tx fee

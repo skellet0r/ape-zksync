@@ -1,7 +1,9 @@
+import time
 from hashlib import sha256
 from typing import Dict, Optional
 
 from ape.api import BlockAPI, TransactionAPI, Web3Provider
+from ape.exceptions import TransactionError
 from ape.utils import EMPTY_BYTES32
 from ape_ethereum.ecosystem import Ethereum
 from ethpm_types.abi import ConstructorABI
@@ -49,6 +51,50 @@ class ZKSyncProvider(Web3Provider):
     def disconnect(self):
         self._web3 = None
 
+    def prepare_transaction(self, txn: TransactionAPI) -> TransactionAPI:
+        txn.chain_id = self.network.chain_id
+
+        txn_type = TransactionType(txn.type)
+        if (
+            txn_type == TransactionType.LEGACY
+            and isinstance(txn, LegacyTransaction)
+            and txn.gas_price is None
+        ):
+            txn.gas_price = self.gas_price
+        elif txn_type == TransactionType.ZKSYNC:
+            if txn.max_priority_fee is None:
+                txn.max_priority_fee = self.priority_fee
+
+            if txn.max_fee is None:
+                txn.max_fee = self.base_fee
+
+        gas_limit = txn.gas_limit or self.network.gas_limit
+        if isinstance(gas_limit, str) and gas_limit.isnumeric():
+            txn.gas_limit = int(gas_limit)
+        elif isinstance(gas_limit, str) and gas_limit.startswith("0x"):
+            txn.gas_limit = int(gas_limit, 16)
+        elif gas_limit == "max":
+            txn.gas_limit = self.max_gas
+        elif gas_limit in ("auto", None):
+            txn.gas_limit = self.estimate_gas_cost(txn)
+        else:
+            txn.gas_limit = gas_limit
+
+        assert txn.gas_limit not in ("auto", "max")
+        # else: Assume user specified the correct amount or txn will fail and waste gas
+
+        if txn.required_confirmations is None:
+            txn.required_confirmations = self.network.required_confirmations
+        elif (
+            not isinstance(txn.required_confirmations, int)
+            or txn.required_confirmations < 0
+        ):
+            raise TransactionError(
+                message="'required_confirmations' must be a positive integer."
+            )
+
+        return txn
+
 
 class ZKSync(Ethereum):
     name = "zksync"
@@ -65,7 +111,17 @@ class ZKSync(Ethereum):
         return ZKSyncBlock.parse_obj(data)
 
     def decode_receipt(self, data: dict) -> ZKSyncReceipt:
-        receipt = ZKSyncReceipt.parse_obj(data)
+        loops = 0
+        while data["blockNumber"] is None:
+            if loops == 32:  # NOTE: magic number (could be anything)
+                raise TransactionError(message=f"Status pending for tx: {data['hash']}")
+            time.sleep(0.25)
+            data.update(self.provider.web3.eth.get_transaction_receipt(data["hash"]))
+
+        data["transactionHash"] = data.get("transactionHash", b"").hex()
+        receipt = ZKSyncReceipt.parse_obj(
+            {"transaction": self.create_transaction(**data), **data}
+        )
         deployment = next(
             (
                 log
