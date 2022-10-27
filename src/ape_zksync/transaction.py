@@ -110,8 +110,12 @@ class ZKSyncReceipt(ReceiptAPI):
         # NOTE: tx fee can be paid in tokens other than ETH
         return next(self.decode_logs()).value
 
+    @property
     def ran_out_of_gas(self) -> bool:
-        return Receipt.ran_out_of_gas(self)
+        return (
+            self.status == TransactionStatus.FAILED
+            and self.gas_used == self.transaction.gas_limit
+        )
 
     def decode_logs(
         self,
