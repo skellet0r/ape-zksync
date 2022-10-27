@@ -59,13 +59,32 @@ class ZKVyperCompiler(CompilerAPI):
             for fp, o in output.items():
                 if not isinstance(o, dict):
                     continue
-                o["contractName"] = Path(fp).stem
-                o["sourceId"] = Path(fp).name
+                fp = Path(fp)
+                if not fp.is_file():
+                    continue
+                name = Path(fp).stem
+                src_id = str(fp.absolute().relative_to(base_path))
+                o["contractName"] = name
+                o["sourceId"] = src_id
                 o["deploymentBytecode"] = {"bytecode": o["bytecode"]}
                 o["runtimeBytecode"] = {"bytecode": o["bytecode_runtime"]}
                 o["zk_version"] = str(zk_version)
                 o["vyper_version"] = self.config.vyper_version
+
                 contracts.append(ContractType.parse_obj(o))
+
+                if o["factory_deps"]:
+                    for suffix in o["factory_deps"].values():
+                        contract = {}
+                        contract["contractName"] = name + suffix
+                        contract["sourceId"] = src_id
+                        contract["deploymentBytecode"] = {
+                            "bytecode": output[suffix]["bytecode"]
+                        }
+                        contract["runtimeBytecode"] = {
+                            "bytecode": output[suffix]["bytecode_runtime"]
+                        }
+                        contracts.append(ContractType.parse_obj(contract))
         return contracts
 
     def get_version_map(
