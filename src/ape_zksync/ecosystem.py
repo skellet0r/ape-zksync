@@ -1,5 +1,5 @@
 from hashlib import sha256
-from typing import Dict
+from typing import Dict, Optional
 
 from ape.api import BlockAPI, TransactionAPI, Web3Provider
 from ape.utils import EMPTY_BYTES32
@@ -20,10 +20,10 @@ from ape_zksync.transaction import (
 
 
 class ZKSyncBlock(BlockAPI):
-    base_fee_per_gas: int
-    l1_batch_number: int
+    base_fee_per_gas: int = Field(..., alias="baseFeePerGas")
+    l1_batch_number: int = Field(..., alias="l1BatchNumber")
 
-    size: int = Field(0, exclude=True)
+    size: Optional[int] = Field(None, exclude=True)
 
     @validator("l1_batch_number", pre=True)
     def to_int(cls, value):
@@ -111,9 +111,12 @@ class ZKSync(Ethereum):
         )
 
     def create_transaction(self, **kwargs) -> TransactionAPI:
-        if kwargs["type"] == TransactionType.LEGACY:
+        if (
+            kwargs.setdefault("type", TransactionType.LEGACY.value)
+            == TransactionType.LEGACY.value
+        ):
             return LegacyTransaction.parse_obj(kwargs)
-        elif kwargs["type"] == TransactionType.ZKSYNC:
+        elif kwargs["type"] == TransactionType.ZKSYNC.value:
             return ZKSyncTransaction.parse_obj(kwargs)
 
         raise Exception()
