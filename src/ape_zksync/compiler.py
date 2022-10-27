@@ -60,7 +60,7 @@ class ZKVyperCompiler(CompilerAPI):
                 if not isinstance(o, dict):
                     continue
                 o["contractName"] = Path(fp).stem
-                o["sourceId"] = fp
+                o["sourceId"] = Path(fp).name
                 o["deploymentBytecode"] = {"bytecode": o["bytecode"]}
                 o["runtimeBytecode"] = {"bytecode": o["bytecode_runtime"]}
                 o["zk_version"] = str(zk_version)
