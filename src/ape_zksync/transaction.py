@@ -101,7 +101,8 @@ class ZKSyncReceipt(ReceiptAPI):
     transaction: Union[LegacyTransaction, ZKSyncTransaction] = Field(None, exclude=True)
 
     def total_fees_paid(self) -> int:
-        return 0
+        # first log emitted is always ETH token tx fee
+        return next(self.decode_logs()).value
 
     def ran_out_of_gas(self) -> bool:
         return False
