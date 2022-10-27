@@ -1,0 +1,3 @@
+from ape.types import AddressType
+
+ETH_TOKEN: AddressType = "0x000000000000000000000000000000000000800A"
