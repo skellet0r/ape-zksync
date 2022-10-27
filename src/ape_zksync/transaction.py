@@ -6,12 +6,14 @@ from ape.api import ReceiptAPI, TransactionAPI
 from ape.contracts import ContractEvent
 from ape.exceptions import SignatureError
 from ape.types import AddressType, ContractLog, GasLimit, MessageSignature
-from ape_ethereum.transactions import StaticFeeTransaction
+from ape_ethereum.transactions import Receipt, StaticFeeTransaction
 from eth_typing import Hash32
 from eth_utils import keccak
 from ethpm_types.abi import EventABI
 from hexbytes import HexBytes
 from pydantic import Field
+
+from ape_zksync.constants import CONTRACT_DEPLOYER_TYPE, ERC20_TYPE
 
 
 class TransactionType(enum.Enum):
@@ -85,7 +87,7 @@ class ZKSyncTransaction(TransactionAPI):
         return HexBytes(keccak(self.serialize_transaction()))
 
 
-class Receipt(ReceiptAPI):
+class ZKSyncReceipt(ReceiptAPI):
     block_hash: Hash32 = Field(..., alias="blockHash")
     block_number: int = Field(..., alias="blockNumber")
     contract_address: Optional[AddressType] = Field(None, alias="contractAddress")
@@ -110,4 +112,15 @@ class Receipt(ReceiptAPI):
             Union[List[Union[EventABI, ContractEvent]], Union[EventABI, ContractEvent]]
         ] = None,
     ) -> Iterator[ContractLog]:
-        yield
+        if abi is None:
+            abi = []
+        elif not isinstance(abi, (list, tuple)):
+            abi = [abi]
+
+        abi += [ERC20_TYPE.events["Transfer"]]
+        abi += [CONTRACT_DEPLOYER_TYPE.events["ContractDeployed"]]
+
+        yield from Receipt.decode_logs(self, abi)
+        yield from Receipt.decode_logs(self)
+
+    _decode_ds_note = Receipt._decode_ds_note
