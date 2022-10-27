@@ -1,12 +1,13 @@
 from hashlib import sha256
 from typing import Dict
 
-from ape.api import BlockAPI, TransactionAPI
+from ape.api import BlockAPI, TransactionAPI, Web3Provider
 from ape.utils import EMPTY_BYTES32
 from ape_ethereum.ecosystem import Ethereum
 from ethpm_types.abi import ConstructorABI
 from hexbytes import HexBytes
 from pydantic import Field, validator
+from web3 import HTTPProvider, Web3
 
 from ape_zksync.config import ZKSyncConfig
 from ape_zksync.constants import CONTRACT_DEPLOYER, CONTRACT_DEPLOYER_TYPE
@@ -27,6 +28,26 @@ class ZKSyncBlock(BlockAPI):
     @validator("l1_batch_number", pre=True)
     def to_int(self, value):
         return int(value, 16)
+
+
+class ZKSyncProvider(Web3Provider):
+    name = "zksync"
+
+    @property
+    def uri(self) -> str:
+        if self.network.name == "testnet":
+            return "http://localhost:3050"
+        raise Exception(f"Unknown network: {self.network.name}")
+
+    @property
+    def gas_price(self) -> int:
+        return self.web3.eth.gas_price
+
+    def connect(self):
+        self._web3 = Web3(HTTPProvider(self.uri))
+
+    def disconnect(self):
+        self._web3 = None
 
 
 class ZKSync(Ethereum):
