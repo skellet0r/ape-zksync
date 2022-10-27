@@ -11,7 +11,7 @@ from eth_typing import Hash32
 from eth_utils import keccak
 from ethpm_types.abi import EventABI
 from hexbytes import HexBytes
-from pydantic import Field
+from pydantic import Field, validator
 
 from ape_zksync.constants import CONTRACT_DEPLOYER_TYPE, ERC20_TYPE
 
@@ -104,6 +104,10 @@ class ZKSyncReceipt(ReceiptAPI):
     txn_hash: str = Field(..., alias="transactionHash")
     type: int = 0
     transaction: Union[LegacyTransaction, ZKSyncTransaction] = Field(None, exclude=True)
+
+    @validator("l1_batch_number", "l1_batch_tx_index", pre=True)
+    def to_int(cls, value):
+        return int(value, 16)
 
     def total_fees_paid(self) -> int:
         # first log emitted is always ETH token tx fee
