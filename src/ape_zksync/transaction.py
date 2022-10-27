@@ -1,8 +1,8 @@
 import enum
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import rlp
-from ape.api import TransactionAPI
+from ape.api import ReceiptAPI, TransactionAPI
 from ape.exceptions import SignatureError
 from ape.types import AddressType, GasLimit, MessageSignature
 from ape_ethereum.transactions import StaticFeeTransaction
@@ -81,3 +81,19 @@ class ZKSyncTransaction(TransactionAPI):
     @property
     def txn_hash(self) -> HexBytes:
         return HexBytes(keccak(self.serialize_transaction()))
+
+
+class Receipt(ReceiptAPI):
+    block_hash: Hash32 = Field(..., alias="blockHash")
+    block_number: int = Field(..., alias="blockNumber")
+    contract_address: Optional[AddressType] = Field(None, alias="contractAddress")
+    gas_price: int = Field(..., alias="effectiveGasPrice")
+    sender: AddressType = Field(..., alias="from")
+    gas_used: int = Field(..., alias="gasUsed")
+    l1_batch_number: int = Field(..., alias="l1BatchNumber")
+    l1_batch_tx_index: int = Field(..., alias="l1BatchTxIndex")
+    txn_hash: str = Field(..., alias="transactionHash")
+    type: int = 0
+    transaction: Optional[Union[LegacyTransaction, ZKSyncTransaction]] = Field(
+        None, exclude=True
+    )
