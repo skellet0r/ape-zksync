@@ -25,11 +25,13 @@ def ecosystems():
 @plugins.register(plugins.NetworkPlugin)
 def networks():
     yield "zksync", "local", create_network_type(270, 270)
+    yield "zksync", "testnet", create_network_type(280, 280)
 
 
 @plugins.register(plugins.ProviderPlugin)
 def providers():
     yield "zksync", "local", ZKSyncProvider
+    yield "zksync", "testnet", ZKSyncProvider
 
 
 @plugins.register(plugins.AccountPlugin)
