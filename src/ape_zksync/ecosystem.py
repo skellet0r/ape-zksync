@@ -169,7 +169,7 @@ class ZKSync(Ethereum):
         kwargs["chain_id"] = self.provider.chain_id
 
         return super().encode_transaction(
-            CONTRACT_DEPLOYER, create_abi, *create_args, **kwargs
+            CONTRACT_DEPLOYER, create_abi, *create_args, is_aa=True, **kwargs
         )
 
     def create_transaction(self, **kwargs) -> TransactionAPI:

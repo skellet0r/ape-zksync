@@ -6,7 +6,7 @@ import rlp
 from ape.api import ReceiptAPI, TransactionAPI
 from ape.contracts import ContractEvent
 from ape.exceptions import SignatureError
-from ape.types import AddressType, ContractLog, GasLimit, MessageSignature
+from ape.types import AddressType, ContractLog, GasLimit
 from ape_ethereum.transactions import Receipt, StaticFeeTransaction
 from eth_typing import Hash32
 from eth_utils import keccak
@@ -46,7 +46,7 @@ class ZKSyncTransaction(TransactionAPI):
     max_fee: Optional[int] = Field(None, alias="maxFeePerErg")
     max_priority_fee: int = Field(0, alias="maxPriorityFeePerErg")
 
-    aa_signature: Optional[MessageSignature] = None
+    is_aa: bool = False
 
     @validator("factory_deps")
     def to_hex(cls, value):
@@ -55,7 +55,7 @@ class ZKSyncTransaction(TransactionAPI):
         return [HexBytes(v).hex() for v in value]
 
     def serialize_transaction(self) -> bytes:
-        if not (self.signature or self.aa_signature):
+        if not self.signature:
             raise SignatureError("Transaction is not signed.")
 
         to_bytes = (
@@ -72,7 +72,7 @@ class ZKSyncTransaction(TransactionAPI):
             HexBytes(self.data),
         ]
 
-        if self.signature:
+        if self.signature and not self.is_aa:
             v, r, s = self.signature
             data += [to_bytes(v - 27), to_bytes(r), to_bytes(s)]
         else:
@@ -84,7 +84,7 @@ class ZKSyncTransaction(TransactionAPI):
             HexBytes(self.sender),
             to_bytes(self.gas_per_pubdata_byte_limit),
             [HexBytes(v) for v in self.factory_deps] if self.factory_deps else [],
-            to_bytes(self.aa_signature.encode_rsv() if self.aa_signature else b""),
+            to_bytes(self.signature.encode_rsv() if self.is_aa else b""),
         ]
 
         if self.paymaster:
