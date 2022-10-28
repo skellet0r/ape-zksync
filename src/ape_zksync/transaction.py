@@ -1,5 +1,6 @@
 import enum
-from typing import Iterator, List, Optional, Union
+from hashlib import sha256
+from typing import AnyStr, Iterator, List, Optional, Union
 
 import rlp
 from ape.api import ReceiptAPI, TransactionAPI
@@ -37,7 +38,7 @@ class ZKSyncTransaction(TransactionAPI):
 
     gas_per_pubdata_byte_limit: int = Field(160_000, alias="ergsPerPubdataByteLimit")
     paymaster: Optional[AddressType] = None
-    factory_deps: Optional[List[Hash32]] = Field(None, alias="factoryDeps")
+    factory_deps: Optional[List[bytes]] = Field(None, alias="factoryDeps")
     paymaster_input: Optional[bytes] = Field(None, alias="paymasterInput")
 
     gas_limit: Optional[GasLimit] = Field(None, alias="ergsLimit")
@@ -46,6 +47,12 @@ class ZKSyncTransaction(TransactionAPI):
     max_priority_fee: int = Field(0, alias="maxPriorityFeePerErg")
 
     aa_signature: Optional[MessageSignature] = None
+
+    @validator("factory_deps")
+    def to_hex(cls, value):
+        if not value:
+            return []
+        return [HexBytes(v).hex() for v in value]
 
     def serialize_transaction(self) -> bytes:
         if not (self.signature or self.aa_signature):
@@ -60,7 +67,7 @@ class ZKSyncTransaction(TransactionAPI):
             to_bytes(self.max_priority_fee),
             to_bytes(self.max_fee),
             to_bytes(self.gas_limit),
-            to_bytes(self.receiver),
+            HexBytes(self.receiver),
             to_bytes(self.value),
             to_bytes(self.data),
         ]
@@ -76,7 +83,7 @@ class ZKSyncTransaction(TransactionAPI):
             to_bytes(self.chain_id),
             to_bytes(self.sender),
             to_bytes(self.gas_per_pubdata_byte_limit),
-            [to_bytes(v) for v in self.factory_deps] if self.factory_deps else [],
+            [HexBytes(v) for v in self.factory_deps] if self.factory_deps else [],
             to_bytes(self.aa_signature),
         ]
 
@@ -90,6 +97,17 @@ class ZKSyncTransaction(TransactionAPI):
     @property
     def txn_hash(self) -> HexBytes:
         return HexBytes(keccak(self.serialize_transaction()))
+
+    @staticmethod
+    def hash_bytecode(bytecode: AnyStr) -> "Hash32":
+        # bytecodehash passed as an argument is the sha256 hash of the
+        # init code, where the upper 2 bytes are the word length of the init code
+        bytecode = HexBytes(bytecode)
+        bytecode_hash = sha256(
+            bytecode  # type: ignore
+        ).hexdigest()  # doesn't have leading 0x  # type: ignore
+        bytecode_hash = "0x" + hex(len(bytecode) // 32)[2:].zfill(4) + bytecode_hash[4:]
+        return HexBytes(bytecode_hash)
 
 
 class ZKSyncReceipt(ReceiptAPI):

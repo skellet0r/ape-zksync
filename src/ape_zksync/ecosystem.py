@@ -1,11 +1,12 @@
 import time
 from hashlib import sha256
-from typing import Dict, Optional
+from typing import AnyStr, Dict, Optional
 
 from ape.api import BlockAPI, TransactionAPI, Web3Provider
 from ape.exceptions import TransactionError
 from ape.utils import EMPTY_BYTES32
 from ape_ethereum.ecosystem import Ethereum
+from eth_typing import Hash32
 from ethpm_types.abi import ConstructorABI
 from hexbytes import HexBytes
 from pydantic import Field, validator
@@ -131,6 +132,17 @@ class ZKSync(Ethereum):
             receipt.contract_address = deployment
         return receipt
 
+    @staticmethod
+    def hash_bytecode(bytecode: AnyStr) -> "Hash32":
+        # bytecodehash passed as an argument is the sha256 hash of the
+        # init code, where the upper 2 bytes are the word length of the init code
+        bytecode = HexBytes(bytecode)  # type: ignore
+        bytecode_hash = sha256(
+            bytecode  # type: ignore
+        ).hexdigest()  # doesn't have leading 0x  # type: ignore
+        bytecode_hash = "0x" + hex(len(bytecode) // 32)[2:].zfill(4) + bytecode_hash[4:]
+        return HexBytes(bytecode_hash)
+
     def encode_deployment(
         self, deployment_bytecode: HexBytes, abi: ConstructorABI, *args, **kwargs
     ) -> ZKSyncTransaction:
@@ -139,22 +151,18 @@ class ZKSync(Ethereum):
 
         # bytecodehash passed as an argument is the sha256 hash of the
         # init code, where the upper 2 bytes are the word length of the init code
-        bytecode_hash = sha256(
-            deployment_bytecode
-        ).hexdigest()  # doesn't have leading 0x
-        bytecode_hash = (
-            "0x" + hex(len(deployment_bytecode) // 32)[2:].zfill(4) + bytecode_hash[4:]
-        )
+        bytecode_hash = self.hash_bytecode(deployment_bytecode)
         create_args = [
             HexBytes(EMPTY_BYTES32),
             HexBytes(bytecode_hash),
-            kwargs["value"],
             self.encode_calldata(abi, *args) if abi.inputs else b"",
         ]
 
         # modify kwargs
         kwargs.setdefault("type", TransactionType.ZKSYNC.value)
-        kwargs["factory_deps"] = [deployment_bytecode] + kwargs.get("factory_deps", [])
+        kwargs["factory_deps"] = [HexBytes(deployment_bytecode)] + kwargs.get(
+            "factory_deps", []
+        )
         kwargs.setdefault("gas_price", self.provider.gas_price)
         kwargs["chain_id"] = self.provider.chain_id
 

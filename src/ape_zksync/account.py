@@ -78,7 +78,7 @@ class ZKSyncAccount(KeyfileAccount):
                 maxPriorityFeePerErg=txn.max_priority_fee,
                 nonce=txn.nonce,
                 paymaster=int(txn.paymaster or "0x0", 16),
-                factoryDeps=txn.factory_deps or [],
+                factoryDeps=[txn.hash_bytecode(v) for v in (txn.factory_deps or [])],
                 paymasterInput=txn.paymaster_input or b"",
             )
             tx_struct["message"]["from"] = int(txn.sender, 16)  # type: ignore
