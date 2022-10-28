@@ -69,7 +69,7 @@ class ZKSyncTransaction(TransactionAPI):
             to_bytes(self.gas_limit),
             HexBytes(self.receiver),
             to_bytes(self.value),
-            to_bytes(self.data),
+            HexBytes(self.data),
         ]
 
         if self.signature:
@@ -81,16 +81,16 @@ class ZKSyncTransaction(TransactionAPI):
 
         data += [
             to_bytes(self.chain_id),
-            to_bytes(self.sender),
+            HexBytes(self.sender),
             to_bytes(self.gas_per_pubdata_byte_limit),
             [HexBytes(v) for v in self.factory_deps] if self.factory_deps else [],
-            to_bytes(self.aa_signature),
+            to_bytes(self.aa_signature.encode_rsv() if self.aa_signature else b""),
         ]
 
         if self.paymaster:
-            data += [to_bytes(self.paymaster), to_bytes(self.paymaster_input)]
+            data += [[HexBytes(self.paymaster), to_bytes(self.paymaster_input)]]
         else:
-            data += []
+            data += [[]]
 
         return HexBytes(self.type) + rlp.encode(data)
 
