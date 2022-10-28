@@ -141,9 +141,11 @@ class ZKSync(Ethereum):
         bytecode = HexBytes(bytecode)  # type: ignore
         bytecode_hash = sha256(
             bytecode  # type: ignore
-        ).hexdigest()  # doesn't have leading 0x  # type: ignore
-        bytecode_hash = "0x" + hex(len(bytecode) // 32)[2:].zfill(4) + bytecode_hash[4:]
-        return HexBytes(bytecode_hash)
+        ).digest()  # doesn't have leading 0x  # type: ignore
+
+        bytecode_len_words = (len(bytecode) // 32).to_bytes(2, "big")
+        codehash_version = b"\x01\x00"
+        return codehash_version + bytecode_len_words + bytecode_hash[4:]
 
     def encode_deployment(
         self, deployment_bytecode: HexBytes, abi: ConstructorABI, *args, **kwargs

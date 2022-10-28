@@ -102,12 +102,14 @@ class ZKSyncTransaction(TransactionAPI):
     def hash_bytecode(bytecode: AnyStr) -> "Hash32":
         # bytecodehash passed as an argument is the sha256 hash of the
         # init code, where the upper 2 bytes are the word length of the init code
-        bytecode = HexBytes(bytecode)
+        bytecode = HexBytes(bytecode)  # type: ignore
         bytecode_hash = sha256(
             bytecode  # type: ignore
-        ).hexdigest()  # doesn't have leading 0x  # type: ignore
-        bytecode_hash = "0x" + hex(len(bytecode) // 32)[2:].zfill(4) + bytecode_hash[4:]
-        return HexBytes(bytecode_hash)
+        ).digest()  # doesn't have leading 0x  # type: ignore
+
+        bytecode_len_words = (len(bytecode) // 32).to_bytes(2, "big")
+        codehash_version = b"\x01\x00"
+        return codehash_version + bytecode_len_words + bytecode_hash[4:]
 
 
 class ZKSyncReceipt(ReceiptAPI):
