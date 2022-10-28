@@ -132,7 +132,7 @@ class ZKSync(Ethereum):
             None,
         )
         if deployment:
-            receipt.contract_address = deployment
+            receipt.contract_address = deployment.contractAddress
         return receipt
 
     def get_proxy_info(self, address: AddressType) -> Optional[ProxyInfo]:
