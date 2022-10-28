@@ -4,8 +4,9 @@ from typing import AnyStr, Dict, Optional
 
 from ape.api import BlockAPI, TransactionAPI, Web3Provider
 from ape.exceptions import TransactionError
+from ape.types import AddressType
 from ape.utils import EMPTY_BYTES32
-from ape_ethereum.ecosystem import Ethereum
+from ape_ethereum.ecosystem import Ethereum, ProxyInfo
 from eth_typing import Hash32
 from ethpm_types.abi import ConstructorABI
 from hexbytes import HexBytes
@@ -133,6 +134,9 @@ class ZKSync(Ethereum):
         if deployment:
             receipt.contract_address = deployment
         return receipt
+
+    def get_proxy_info(self, address: AddressType) -> Optional[ProxyInfo]:
+        return None
 
     @staticmethod
     def hash_bytecode(bytecode: AnyStr) -> "Hash32":
