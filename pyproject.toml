@@ -10,6 +10,7 @@ readme = "README.md"
 python = ">=3.8,<3.11"
 eth-ape = "^0.5.2"
 zkvvm = "^0.1.0"
+docker = "^6.0.0"
 
 [tool.poetry.group.lint.dependencies]
 black = "^22.10.0"

@@ -242,6 +242,24 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "docker"
+version = "6.0.0"
+description = "A Python library for the Docker Engine API."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+packaging = ">=14.0"
+pywin32 = {version = ">=304", markers = "sys_platform == \"win32\""}
+requests = ">=2.26.0"
+urllib3 = ">=1.26.0"
+websocket-client = ">=0.32.0"
+
+[package.extras]
+ssh = ["paramiko (>=2.4.3)"]
+
+[[package]]
 name = "eip712"
 version = "0.1.4"
 description = "eip712: Message classes for typed structured data hashing and signing in Ethereum"
@@ -1698,6 +1716,19 @@ linter = ["black (>=22.1.0,<23.0)", "flake8 (==3.8.3)", "isort (>=4.2.15,<4.3.5)
 tester = ["eth-tester[py-evm] (==v0.7.0-beta.1)", "py-geth (>=3.9.1,<4)"]
 
 [[package]]
+name = "websocket-client"
+version = "1.4.1"
+description = "WebSocket client for Python with low level API options"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+docs = ["Sphinx (>=3.4)", "sphinx-rtd-theme (>=0.5)"]
+optional = ["python-socks", "wsaccel"]
+test = ["websockets"]
+
+[[package]]
 name = "websockets"
 version = "10.3"
 description = "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
@@ -1753,7 +1784,7 @@ vvm = ">=0.1.0,<0.2.0"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "75863f0715f653fdb88f078a87537e540b5b1b4fa5ceab393dcdd3fab3e31597"
+content-hash = "5ed2f8ee55f15fc74a96e2ba9927cc06b6a91bea849e883f9bdb171862b3921a"
 
 [metadata.files]
 aiohttp = [
@@ -2166,6 +2197,10 @@ deprecated = [
 distlib = [
     {file = "distlib-0.3.6-py2.py3-none-any.whl", hash = "sha256:f35c4b692542ca110de7ef0bea44d73981caeb34ca0b9b6b2e6d7790dda8f80e"},
     {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
+]
+docker = [
+    {file = "docker-6.0.0-py3-none-any.whl", hash = "sha256:6e06ee8eca46cd88733df09b6b80c24a1a556bc5cb1e1ae54b2c239886d245cf"},
+    {file = "docker-6.0.0.tar.gz", hash = "sha256:19e330470af40167d293b0352578c1fa22d74b34d3edf5d4ff90ebc203bbb2f1"},
 ]
 eip712 = [
     {file = "eip712-0.1.4-py3-none-any.whl", hash = "sha256:0f4d1c58119501115cbe6da4a15a04b640050af390243ded8192c80f6a9c4afd"},
@@ -3216,6 +3251,10 @@ wcwidth = [
 web3 = [
     {file = "web3-6.0.0b6-py3-none-any.whl", hash = "sha256:df74801cb4dff45b175227feb3126ac77480c801ac6412d471520abecf2c8c00"},
     {file = "web3-6.0.0b6.tar.gz", hash = "sha256:1674301b261da529ee6537b970d1a01a1e6d22328b246c16636263f96c2b6df2"},
+]
+websocket-client = [
+    {file = "websocket-client-1.4.1.tar.gz", hash = "sha256:f9611eb65c8241a67fb373bef040b3cf8ad377a9f6546a12b620b6511e8ea9ef"},
+    {file = "websocket_client-1.4.1-py3-none-any.whl", hash = "sha256:398909eb7e261f44b8f4bd474785b6ec5f5b499d4953342fe9755e01ef624090"},
 ]
 websockets = [
     {file = "websockets-10.3-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:661f641b44ed315556a2fa630239adfd77bd1b11cb0b9d96ed8ad90b0b1e4978"},
