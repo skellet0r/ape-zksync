@@ -43,7 +43,7 @@ class ZKSyncTransaction(TransactionAPI):
         DEFAULT_GAS_PER_PUBDATA_BYTE_LIMIT, alias="ergsPerPubdataByteLimit"
     )
     paymaster: Optional[AddressType] = None
-    factory_deps: Optional[List[bytes]] = Field(None, alias="factoryDeps")
+    factory_deps: List[bytes] = Field(default_factory=list, alias="factoryDeps")
     paymaster_input: Optional[bytes] = Field(None, alias="paymasterInput")
 
     gas_limit: Optional[GasLimit] = Field(None, alias="ergsLimit")
