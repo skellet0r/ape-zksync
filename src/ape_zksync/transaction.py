@@ -54,12 +54,6 @@ class ZKSyncTransaction(TransactionAPI):
 
     signature: Optional[Union[MessageSignature, bytes]] = Field(None, exclude=True)
 
-    @validator("factory_deps")
-    def to_hex(cls, value):
-        if not value:
-            return []
-        return [HexBytes(v).hex() for v in value]
-
     def serialize_transaction(self) -> bytes:
         if not self.signature:
             raise SignatureError("Transaction is not signed.")
