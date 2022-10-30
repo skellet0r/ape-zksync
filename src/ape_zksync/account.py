@@ -1,20 +1,15 @@
 from copy import deepcopy
-from typing import Iterator, Optional
+from typing import Iterator
 
-import click
-from ape.api import AccountAPI, TransactionAPI
-from ape.exceptions import AccountsError
-from ape.types import TransactionSignature
+from ape.api import AccountAPI, ReceiptAPI, TransactionAPI
+from ape.exceptions import AccountsError, SignatureError, TransactionError
 from ape_accounts import AccountContainer, KeyfileAccount
-from eth_account import Account as EthAccount
-from eth_account._utils.structured_data.hashing import hash_domain
-from eth_account._utils.structured_data.hashing import hash_message as hash_eip712_message
+from eth_account._utils.structured_data.hashing import hash_domain, hash_message
 from eth_account.messages import SignableMessage
-from eth_utils import to_bytes
-from hexbytes import HexBytes
 
 from ape_zksync.constants import ZKSYNC_TRANSACTION_STRUCT
 from ape_zksync.transaction import LegacyTransaction, ZKSyncTransaction
+from ape_zksync.utils import hash_bytecode
 
 
 class ZKAccountContainer(AccountContainer):
@@ -25,15 +20,24 @@ class ZKAccountContainer(AccountContainer):
 
 
 class ZKSyncAccount(KeyfileAccount):
-    __autosign: bool = False
-    __cached_key: Optional[HexBytes] = None
+    def call(self, txn: TransactionAPI, send_everything: bool = False) -> ReceiptAPI:
+        txn = self.prepare_transaction(txn)
 
-    def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
-        user_approves = self.__autosign or click.confirm(f"{txn}\n\nSign: ")
-        if not user_approves:
-            return None
+        if send_everything:
+            if txn.max_fee is None:
+                raise TransactionError(message="Max fee must not be None.")
+            if not txn.gas_limit or txn.gas_limit is None:
+                raise TransactionError(message="The txn.gas_limit is not set.")
+            txn.value = self.balance - (txn.max_fee * txn.gas_limit)
+            if txn.value <= 0:
+                raise AccountsError(
+                    f"Sender does not have enough to cover transaction value and gas: "
+                    f"{txn.max_fee * txn.gas_limit}"
+                )
 
-        if isinstance(txn, ZKSyncTransaction):
+        if isinstance(txn, LegacyTransaction):
+            txn.signature = self.sign_transaction(txn)
+        elif isinstance(txn, ZKSyncTransaction):
             tx_struct = deepcopy(ZKSYNC_TRANSACTION_STRUCT)
             tx_struct["domain"]["chainId"] = txn.chain_id  # type: ignore
             tx_struct["message"] = dict(
@@ -47,25 +51,19 @@ class ZKSyncAccount(KeyfileAccount):
                 maxPriorityFeePerErg=txn.max_priority_fee,
                 nonce=txn.nonce,
                 paymaster=int(txn.paymaster or "0x0", 16),
-                factoryDeps=[txn.hash_bytecode(v) for v in (txn.factory_deps or [])],
+                factoryDeps=[hash_bytecode(v) for v in txn.factory_deps],
                 paymasterInput=txn.paymaster_input or b"",
             )
             tx_struct["message"]["from"] = int(txn.sender, 16)  # type: ignore
             signable_message = SignableMessage(
-                HexBytes(b"\x01"),
+                b"\x01",
                 hash_domain(tx_struct),
-                hash_eip712_message(tx_struct),
+                hash_message(tx_struct),
             )
 
-            return self.sign_message(signable_message)
-        elif isinstance(txn, LegacyTransaction):
-            signed_txn = EthAccount.sign_transaction(
-                txn.dict(exclude_none=True, by_alias=True), self._KeyfileAccount__key
-            )
-            return TransactionSignature(  # type: ignore
-                v=signed_txn.v,
-                r=to_bytes(signed_txn.r),
-                s=to_bytes(signed_txn.s),
-            )
+            txn.signature = self.sign_message(signable_message)
 
-        raise AccountsError(f"Invalid tx type: {txn.type}")
+        if not txn.signature:
+            raise SignatureError("The transaction was not signed.")
+
+        return self.provider.send_transaction(txn)
