@@ -7,7 +7,7 @@ from ape.contracts import ContractEvent
 from ape.exceptions import SignatureError
 from ape.types import AddressType, ContractLog, GasLimit, MessageSignature
 from ape_ethereum.transactions import Receipt, StaticFeeTransaction
-from eth_typing import Hash32
+from eth_typing import Hash32, HexStr
 from eth_utils import keccak
 from ethpm_types.abi import EventABI
 from hexbytes import HexBytes
@@ -44,15 +44,15 @@ class ZKSyncTransaction(TransactionAPI):
         DEFAULT_GAS_PER_PUBDATA_BYTE_LIMIT, alias="ergsPerPubdataByteLimit"
     )
     paymaster: Optional[AddressType] = None
-    factory_deps: List[bytes] = Field(default_factory=list, alias="factoryDeps")
-    paymaster_input: Optional[bytes] = Field(None, alias="paymasterInput")
+    factory_deps: List[HexStr] = Field(default_factory=list, alias="factoryDeps")
+    paymaster_input: Optional[HexStr] = Field(None, alias="paymasterInput")
 
     gas_limit: Optional[GasLimit] = Field(None, alias="ergsLimit")
     type: int = Field(TransactionType.ZKSYNC.value, alias="txType", const=True)
     max_fee: Optional[int] = Field(None, alias="maxFeePerErg")
     max_priority_fee: int = Field(0, alias="maxPriorityFeePerErg")
 
-    signature: Optional[Union[MessageSignature, bytes]] = Field(None, exclude=True)
+    signature: Optional[Union[MessageSignature, HexStr]] = Field(None, exclude=True)
 
     def serialize_transaction(self) -> bytes:
         if not self.signature:
@@ -80,7 +80,11 @@ class ZKSyncTransaction(TransactionAPI):
             HexBytes(self.sender),
             to_bytes(self.gas_per_pubdata_byte_limit),
             [HexBytes(v) for v in self.factory_deps] if self.factory_deps else [],
-            to_bytes(self.signature if isinstance(self.signature, bytes) else b""),
+            to_bytes(
+                HexBytes(self.signature)
+                if not isinstance(self.signature, MessageSignature)
+                else b""
+            ),
         ]
 
         if self.paymaster:
