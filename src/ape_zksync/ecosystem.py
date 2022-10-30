@@ -88,14 +88,12 @@ class ZKSync(Ethereum):
         ]
 
         # modify kwargs
-        kwargs.setdefault("type", TransactionType.ZKSYNC.value)
-        kwargs["factory_deps"] = [HexBytes(deployment_bytecode)] + kwargs.get("factory_deps", [])
+        kwargs["type"] = TransactionType.ZKSYNC.value
+        kwargs["factory_deps"] = [deployment_bytecode] + kwargs.get("factory_deps", [])
         kwargs.setdefault("gas_price", self.provider.gas_price)
         kwargs["chain_id"] = self.provider.chain_id
 
-        return super().encode_transaction(
-            CONTRACT_DEPLOYER, create_abi, *create_args, is_aa=True, **kwargs
-        )
+        return super().encode_transaction(CONTRACT_DEPLOYER, create_abi, *create_args, **kwargs)
 
     def create_transaction(self, **kwargs) -> TransactionAPI:
         if kwargs.setdefault("type", TransactionType.ZKSYNC.value) == TransactionType.ZKSYNC.value:
