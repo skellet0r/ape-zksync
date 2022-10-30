@@ -15,7 +15,7 @@ def config_class():
 
 @plugins.register(plugins.CompilerPlugin)
 def register_compiler():
-    return (".zkvy", ".zk.vy"), ZKVyperCompiler
+    return (".zkvy",), ZKVyperCompiler
 
 
 @plugins.register(plugins.EcosystemPlugin)
