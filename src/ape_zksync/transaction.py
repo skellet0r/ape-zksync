@@ -105,7 +105,6 @@ class ZKSyncReceipt(ReceiptAPI):
     l1_batch_number: Optional[int] = Field(..., alias="l1BatchNumber")
     l1_batch_tx_index: Optional[int] = Field(..., alias="l1BatchTxIndex")
     txn_hash: str = Field(..., alias="transactionHash")
-    type: int = 0
 
     @validator("l1_batch_number", "l1_batch_tx_index", pre=True)
     def to_int(cls, value):
@@ -140,6 +139,5 @@ class ZKSyncReceipt(ReceiptAPI):
         abi += [CONTRACT_DEPLOYER_TYPE.events["ContractDeployed"]]
 
         yield from Receipt.decode_logs(self, abi)
-        yield from Receipt.decode_logs(self)
 
     _decode_ds_note = Receipt._decode_ds_note
