@@ -1,8 +1,7 @@
-from ape import plugins
+from pathlib import Path
 
 from ape_zksync_test.account import TestAccount, TestAccountContainer
 
-
-@plugins.register(plugins.AccountPlugin)
-def account_types():
-    return TestAccountContainer, TestAccount
+container = TestAccountContainer.parse_obj(
+    {"data_folder": Path(__file__).parent / "data", "account_type": TestAccount}
+)
