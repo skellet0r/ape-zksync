@@ -4,7 +4,8 @@ from ape.api import create_network_type
 from ape_zksync.account import ZKAccountContainer, ZKSyncAccount
 from ape_zksync.compiler import ZKVyperCompiler
 from ape_zksync.config import ZKSyncConfig
-from ape_zksync.ecosystem import ZKSync, ZKSyncProvider
+from ape_zksync.ecosystem import ZKSync
+from ape_zksync.provider import ZKSyncProvider
 
 
 @plugins.register(plugins.Config)
