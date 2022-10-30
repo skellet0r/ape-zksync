@@ -5,7 +5,7 @@ import rlp
 from ape.api import ReceiptAPI, TransactionAPI
 from ape.contracts import ContractEvent
 from ape.exceptions import SignatureError
-from ape.types import AddressType, ContractLog, GasLimit
+from ape.types import AddressType, ContractLog, GasLimit, MessageSignature
 from ape_ethereum.transactions import Receipt, StaticFeeTransaction
 from eth_typing import Hash32
 from eth_utils import keccak
@@ -52,7 +52,7 @@ class ZKSyncTransaction(TransactionAPI):
     max_fee: Optional[int] = Field(None, alias="maxFeePerErg")
     max_priority_fee: int = Field(0, alias="maxPriorityFeePerErg")
 
-    is_aa: bool = False
+    signature: Optional[Union[MessageSignature, bytes]] = Field(None, exclude=True)
 
     @validator("factory_deps")
     def to_hex(cls, value):
@@ -74,7 +74,7 @@ class ZKSyncTransaction(TransactionAPI):
             HexBytes(self.data),
         ]
 
-        if self.signature and not self.is_aa:
+        if isinstance(self.signature, MessageSignature):
             v, r, s = self.signature
             data += [to_bytes(v - 27), to_bytes(r), to_bytes(s)]
         else:
@@ -86,7 +86,7 @@ class ZKSyncTransaction(TransactionAPI):
             HexBytes(self.sender),
             to_bytes(self.gas_per_pubdata_byte_limit),
             [HexBytes(v) for v in self.factory_deps] if self.factory_deps else [],
-            to_bytes(self.signature.encode_rsv() if self.is_aa else b""),
+            to_bytes(self.signature if isinstance(self.signature, bytes) else b""),
         ]
 
         if self.paymaster:
