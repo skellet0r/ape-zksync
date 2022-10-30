@@ -85,13 +85,8 @@ class ZKSyncProvider(Web3Provider):
 
         if txn.required_confirmations is None:
             txn.required_confirmations = self.network.required_confirmations
-        elif (
-            not isinstance(txn.required_confirmations, int)
-            or txn.required_confirmations < 0
-        ):
-            raise TransactionError(
-                message="'required_confirmations' must be a positive integer."
-            )
+        elif not isinstance(txn.required_confirmations, int) or txn.required_confirmations < 0:
+            raise TransactionError(message="'required_confirmations' must be a positive integer.")
 
         return txn
 
@@ -119,9 +114,7 @@ class ZKSync(Ethereum):
             data.update(self.provider.web3.eth.get_transaction_receipt(data["hash"]))
 
         data["transactionHash"] = data.get("transactionHash", b"").hex()
-        receipt = ZKSyncReceipt.parse_obj(
-            {"transaction": self.create_transaction(**data), **data}
-        )
+        receipt = ZKSyncReceipt.parse_obj({"transaction": self.create_transaction(**data), **data})
         deployment = next(
             (
                 log
@@ -168,9 +161,7 @@ class ZKSync(Ethereum):
 
         # modify kwargs
         kwargs.setdefault("type", TransactionType.ZKSYNC.value)
-        kwargs["factory_deps"] = [HexBytes(deployment_bytecode)] + kwargs.get(
-            "factory_deps", []
-        )
+        kwargs["factory_deps"] = [HexBytes(deployment_bytecode)] + kwargs.get("factory_deps", [])
         kwargs.setdefault("gas_price", self.provider.gas_price)
         kwargs["chain_id"] = self.provider.chain_id
 
@@ -179,10 +170,7 @@ class ZKSync(Ethereum):
         )
 
     def create_transaction(self, **kwargs) -> TransactionAPI:
-        if (
-            kwargs.setdefault("type", TransactionType.ZKSYNC.value)
-            == TransactionType.ZKSYNC.value
-        ):
+        if kwargs.setdefault("type", TransactionType.ZKSYNC.value) == TransactionType.ZKSYNC.value:
             return ZKSyncTransaction.parse_obj(kwargs)
         elif kwargs["type"] == TransactionType.LEGACY.value:
             return LegacyTransaction.parse_obj(kwargs)

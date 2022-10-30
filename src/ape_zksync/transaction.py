@@ -64,9 +64,7 @@ class ZKSyncTransaction(TransactionAPI):
         if not self.signature:
             raise SignatureError("Transaction is not signed.")
 
-        to_bytes = (
-            lambda val: HexBytes(val).lstrip(b"\x00") if val else HexBytes(b"")
-        )  # noqa: E731
+        to_bytes = lambda val: HexBytes(val).lstrip(b"\x00") if val else HexBytes(b"")  # noqa: E731
 
         data = [
             to_bytes(self.nonce),
@@ -145,8 +143,7 @@ class ZKSyncReceipt(ReceiptAPI):
     @property
     def ran_out_of_gas(self) -> bool:
         return (
-            self.status == TransactionStatus.FAILED
-            and self.gas_used == self.transaction.gas_limit
+            self.status == TransactionStatus.FAILED and self.gas_used == self.transaction.gas_limit
         )
 
     def decode_logs(

@@ -36,10 +36,7 @@ class ZKVyperCompiler(CompilerAPI):
     def get_compiler_settings(
         self, contract_filepaths: List[Path], base_path: Optional[Path] = None
     ) -> Dict[Version, Dict]:
-        return {
-            ver: {}
-            for ver in self.get_version_map(contract_filepaths, base_path).keys()
-        }
+        return {ver: {} for ver in self.get_version_map(contract_filepaths, base_path).keys()}
 
     def compile(
         self, contract_filepaths: List[Path], base_path: Optional[Path]
@@ -78,9 +75,7 @@ class ZKVyperCompiler(CompilerAPI):
                         contract = {}
                         contract["contractName"] = name + suffix
                         contract["sourceId"] = src_id
-                        contract["deploymentBytecode"] = {
-                            "bytecode": output[suffix]["bytecode"]
-                        }
+                        contract["deploymentBytecode"] = {"bytecode": output[suffix]["bytecode"]}
                         contract["runtimeBytecode"] = {
                             "bytecode": output[suffix]["bytecode_runtime"]
                         }

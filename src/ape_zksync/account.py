@@ -10,9 +10,7 @@ from ape.types import AddressType, MessageSignature, TransactionSignature
 from ape_accounts import AccountContainer, KeyfileAccount
 from eth_account import Account as EthAccount
 from eth_account._utils.structured_data.hashing import hash_domain
-from eth_account._utils.structured_data.hashing import (
-    hash_message as hash_eip712_message,
-)
+from eth_account._utils.structured_data.hashing import hash_message as hash_eip712_message
 from eth_account.messages import SignableMessage
 from eth_utils import to_bytes
 from hexbytes import HexBytes
