@@ -21,14 +21,14 @@ from ape_zksync.constants import (
 )
 
 
-class TransactionType(enum.Enum):
-    LEGACY = 0x00
-    ZKSYNC = 0x71
-
-
 class TransactionStatus(enum.IntEnum):
     FAILED = 0
     SUCCESS = 1
+
+
+class TransactionType(enum.IntEnum):
+    LEGACY = 0x00
+    ZKSYNC = 0x71
 
 
 class LegacyTransaction(StaticFeeTransaction):
