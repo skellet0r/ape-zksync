@@ -10,3 +10,5 @@ MAX_BYTECODE_SIZE = (2**16 - 1) * 32
 
 ERC20_TYPE = ContractType.parse_raw(loads("ERC20.json"))
 CONTRACT_DEPLOYER_TYPE = ContractType.parse_raw(loads("ContractDeployer.json"))
+
+DEFAULT_GAS_PER_PUBDATA_BYTE_LIMIT = 160_000

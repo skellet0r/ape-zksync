@@ -14,7 +14,11 @@ from ethpm_types.abi import EventABI
 from hexbytes import HexBytes
 from pydantic import Field, validator
 
-from ape_zksync.constants import CONTRACT_DEPLOYER_TYPE, ERC20_TYPE
+from ape_zksync.constants import (
+    CONTRACT_DEPLOYER_TYPE,
+    DEFAULT_GAS_PER_PUBDATA_BYTE_LIMIT,
+    ERC20_TYPE,
+)
 
 
 class TransactionType(enum.Enum):
@@ -36,7 +40,9 @@ class LegacyTransaction(StaticFeeTransaction):
 class ZKSyncTransaction(TransactionAPI):
     """ZKSync Transaction"""
 
-    gas_per_pubdata_byte_limit: int = Field(160_000, alias="ergsPerPubdataByteLimit")
+    gas_per_pubdata_byte_limit: int = Field(
+        DEFAULT_GAS_PER_PUBDATA_BYTE_LIMIT, alias="ergsPerPubdataByteLimit"
+    )
     paymaster: Optional[AddressType] = None
     factory_deps: Optional[List[bytes]] = Field(None, alias="factoryDeps")
     paymaster_input: Optional[bytes] = Field(None, alias="paymasterInput")
