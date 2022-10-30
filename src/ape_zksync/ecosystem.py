@@ -1,13 +1,11 @@
 import time
-from hashlib import sha256
-from typing import AnyStr, Dict, Optional
+from typing import Dict, Optional
 
 from ape.api import BlockAPI, TransactionAPI, Web3Provider
 from ape.exceptions import TransactionError
 from ape.types import AddressType
 from ape.utils import EMPTY_BYTES32
 from ape_ethereum.ecosystem import Ethereum, ProxyInfo
-from eth_typing import Hash32
 from ethpm_types.abi import ConstructorABI
 from hexbytes import HexBytes
 from pydantic import Field, validator
@@ -21,6 +19,7 @@ from ape_zksync.transaction import (
     ZKSyncReceipt,
     ZKSyncTransaction,
 )
+from ape_zksync.utils import hash_bytecode
 
 
 class ZKSyncBlock(BlockAPI):
@@ -131,19 +130,6 @@ class ZKSync(Ethereum):
     def get_proxy_info(self, address: AddressType) -> Optional[ProxyInfo]:
         return None
 
-    @staticmethod
-    def hash_bytecode(bytecode: AnyStr) -> "Hash32":
-        # bytecodehash passed as an argument is the sha256 hash of the
-        # init code, where the upper 2 bytes are the word length of the init code
-        bytecode = HexBytes(bytecode)  # type: ignore
-        bytecode_hash = sha256(
-            bytecode  # type: ignore
-        ).digest()  # doesn't have leading 0x  # type: ignore
-
-        bytecode_len_words = (len(bytecode) // 32).to_bytes(2, "big")
-        codehash_version = b"\x01\x00"
-        return codehash_version + bytecode_len_words + bytecode_hash[4:]
-
     def encode_deployment(
         self, deployment_bytecode: HexBytes, abi: ConstructorABI, *args, **kwargs
     ) -> ZKSyncTransaction:
@@ -152,7 +138,7 @@ class ZKSync(Ethereum):
 
         # bytecodehash passed as an argument is the sha256 hash of the
         # init code, where the upper 2 bytes are the word length of the init code
-        bytecode_hash = self.hash_bytecode(deployment_bytecode)
+        bytecode_hash = hash_bytecode(deployment_bytecode)
         create_args = [
             HexBytes(EMPTY_BYTES32),
             HexBytes(bytecode_hash),
