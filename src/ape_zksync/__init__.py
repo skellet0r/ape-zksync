@@ -15,7 +15,7 @@ def config_class():
 
 @plugins.register(plugins.CompilerPlugin)
 def register_compiler():
-    return (".zkvy",), ZKVyperCompiler
+    return (".zkvy", ".zk.vy"), ZKVyperCompiler
 
 
 @plugins.register(plugins.EcosystemPlugin)
@@ -25,13 +25,12 @@ def ecosystems():
 
 @plugins.register(plugins.NetworkPlugin)
 def networks():
-    yield "zksync", "local", create_network_type(270, 270)
     yield "zksync", "testnet", create_network_type(280, 280)
+    yield "zksync", "local", create_network_type(270, 270)
 
 
 @plugins.register(plugins.ProviderPlugin)
 def providers():
-    yield "zksync", "local", ZKSyncProvider
     yield "zksync", "testnet", ZKSyncProvider
 
 
