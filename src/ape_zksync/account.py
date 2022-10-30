@@ -15,38 +15,9 @@ from eth_account.messages import SignableMessage
 from eth_utils import to_bytes
 from hexbytes import HexBytes
 
+from ape_zksync.constants import ZKSYNC_TRANSACTION_STRUCT
 from ape_zksync.data import loads
 from ape_zksync.transaction import LegacyTransaction, ZKSyncTransaction
-
-STRUCT = {
-    "types": {
-        "EIP712Domain": [
-            {"name": "name", "type": "string"},
-            {"name": "version", "type": "string"},
-            {"name": "chainId", "type": "uint256"},
-        ],
-        "Transaction": [
-            {"name": "txType", "type": "uint256"},
-            {"name": "from", "type": "uint256"},
-            {"name": "to", "type": "uint256"},
-            {"name": "ergsLimit", "type": "uint256"},
-            {"name": "ergsPerPubdataByteLimit", "type": "uint256"},
-            {"name": "maxFeePerErg", "type": "uint256"},
-            {"name": "maxPriorityFeePerErg", "type": "uint256"},
-            {"name": "paymaster", "type": "uint256"},
-            {"name": "nonce", "type": "uint256"},
-            {"name": "value", "type": "uint256"},
-            {"name": "data", "type": "bytes"},
-            {"name": "factoryDeps", "type": "bytes32[]"},
-            {"name": "paymasterInput", "type": "bytes"},
-        ],
-    },
-    "primaryType": "Transaction",
-    "domain": {
-        "name": "zkSync",
-        "version": "2",
-    },
-}
 
 
 class ZKAccountContainer(AccountContainer):
@@ -66,7 +37,7 @@ class ZKSyncAccount(KeyfileAccount):
             return None
 
         if isinstance(txn, ZKSyncTransaction):
-            tx_struct = deepcopy(STRUCT)
+            tx_struct = deepcopy(ZKSYNC_TRANSACTION_STRUCT)
             tx_struct["domain"]["chainId"] = txn.chain_id  # type: ignore
             tx_struct["message"] = dict(
                 txType=txn.type,
@@ -126,7 +97,7 @@ class TestAccount(TestAccountAPI):
 
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
         if isinstance(txn, ZKSyncTransaction):
-            tx_struct = deepcopy(STRUCT)
+            tx_struct = deepcopy(ZKSYNC_TRANSACTION_STRUCT)
             tx_struct["domain"]["chainId"] = txn.chain_id  # type: ignore
             tx_struct["message"] = dict(
                 txType=txn.type,
