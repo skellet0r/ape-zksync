@@ -18,6 +18,7 @@ from ape_zksync.constants import (
     DEFAULT_GAS_PER_PUBDATA_BYTE_LIMIT,
     ERC20_TYPE,
 )
+from ape_zksync.utils import to_bytes
 
 
 class TransactionStatus(enum.IntEnum):
@@ -62,8 +63,6 @@ class ZKSyncTransaction(TransactionAPI):
     def serialize_transaction(self) -> bytes:
         if not self.signature:
             raise SignatureError("Transaction is not signed.")
-
-        to_bytes = lambda val: HexBytes(val).lstrip(b"\x00") if val else HexBytes(b"")  # noqa: E731
 
         data = [
             to_bytes(self.nonce),
