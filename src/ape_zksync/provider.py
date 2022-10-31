@@ -12,6 +12,8 @@ class ZKSyncProvider(Web3Provider):
     def uri(self) -> str:
         if self.network.name == "testnet":
             return "https://zksync2-testnet.zksync.dev"
+        elif self.network.name == "local":
+            return "http://localhost:3050"
         raise Exception(f"Unknown network: {self.network.name}")
 
     @property
