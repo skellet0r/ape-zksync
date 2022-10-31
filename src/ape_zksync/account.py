@@ -78,7 +78,7 @@ class ZKSyncAccount(KeyfileAccount):
 class TestAccountContainer(TestAccountContainerAPI):
     @cached_property
     def _dev_accounts(self) -> List[GeneratedDevAccount]:
-        return [GeneratedDevAccount(**acct) for acct in json.loads(loads("RichWallets.json"))]
+        return [GeneratedDevAccount(*acct.values()) for acct in json.loads(loads("RichWallets.json"))]
 
     @property
     def aliases(self) -> Iterator[str]:
