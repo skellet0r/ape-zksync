@@ -3,6 +3,7 @@ from ape.exceptions import TransactionError
 from web3 import HTTPProvider, Web3
 
 from ape_zksync.transaction import LegacyTransaction, TransactionType
+from ape_zksync.constants import CONTRACT_DEPLOYER
 
 
 class ZKSyncProvider(Web3Provider):
@@ -48,6 +49,9 @@ class ZKSyncProvider(Web3Provider):
             txn.gas_limit = self.max_gas
         elif gas_limit in ("auto", None):
             txn.gas_limit = self.estimate_gas_cost(txn)
+            # TODO: figure why gas estimates are so low for first time deployments
+            # and a way to properly estimate
+            txn.gas_limit *= 6 if txn.receiver == CONTRACT_DEPLOYER else 1
         else:
             txn.gas_limit = gas_limit
 
