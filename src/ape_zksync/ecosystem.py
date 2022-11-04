@@ -23,13 +23,15 @@ from ape_zksync.utils import hash_bytecode
 
 class ZKSyncBlock(BlockAPI):
     base_fee_per_gas: int = Field(..., alias="baseFeePerGas")
-    l1_batch_number: int = Field(..., alias="l1BatchNumber")
+    l1_batch_number: Optional[int] = Field(None, alias="l1BatchNumber")
 
     size: Optional[int] = Field(None, exclude=True)
 
     @validator("l1_batch_number", pre=True)
     def to_int(cls, value):
-        return int(value, 16)
+        if isinstance(value, str):
+            return int(value, 16)
+        return value
 
 
 class ZKSync(Ethereum):
