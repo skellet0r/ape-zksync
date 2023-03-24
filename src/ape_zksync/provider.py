@@ -48,10 +48,10 @@ class ZKSyncProvider(Web3Provider):
         elif gas_limit == "max":
             txn.gas_limit = self.max_gas
         elif gas_limit in ("auto", None):
-            txn.gas_limit = self.estimate_gas_cost(txn)
+            txn.gas_limit = 5_000_000 if txn.receiver == CONTRACT_DEPLOYER else self.estimate_gas_cost(txn)
             # TODO: figure why gas estimates are so low for first time deployments
             # and a way to properly estimate
-            txn.gas_limit *= 6 if txn.receiver == CONTRACT_DEPLOYER else 1
+            # txn.gas_limit *= 6 if txn.receiver == CONTRACT_DEPLOYER else 1
         else:
             txn.gas_limit = gas_limit
 
